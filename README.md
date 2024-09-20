@@ -21,8 +21,8 @@ Create an instance:
 - single
     - [x] create an instance
     - [x] stop an instance
-    - [ ] start an instance
-    - [ ] destroy an instance
+    - [x] start an instance
+    - [x] destroy an instance
 - multiple
     - [ ] create instances from groups file
     - [ ] stop ...

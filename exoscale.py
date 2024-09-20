@@ -26,11 +26,14 @@ class Exoscale:
         )
         return list(filtered_types)
 
+    def start_instance(self, id):
+        return self.put(f"instance/{id}:start").json()
+
     def stop_instance(self, id):
         return self.put(f"instance/{id}:stop").json()
 
-    def start_instance(self, id):
-        return self.put(f"instance/{id}:start").json()
+    def destroy_instance(self, id):
+        return self.delete(f"instance/{id}").json()
 
     def get_ssh_key(self, name):
         return self.get(f"ssh-key/{name}").json()
@@ -68,3 +71,8 @@ class Exoscale:
         headers = {"Content-Type": "application/json"}
         url = self.suffix_url(suffix)
         return requests.put(url, json=payload, auth=self.auth, headers=headers)
+
+    def delete(self, suffix):
+        headers = {"Content-Type": "application/json"}
+        url = self.suffix_url(suffix)
+        return requests.delete(url, auth=self.auth, headers=headers)

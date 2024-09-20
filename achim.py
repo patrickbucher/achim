@@ -76,5 +76,17 @@ def stop_instance(ctx, name):
     print(exo.stop_instance(instance["id"]))
 
 
+@cli.command(help="Destroy a Compute Instance")
+@click.option("--name", help="instance name (hostname)")
+@click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
+@click.pass_context
+def destroy_instance(ctx, name, sure):
+    if not sure:
+        return
+    exo = ctx.obj["exo"]
+    instance = exo.get_instance_by_name(name)
+    print(exo.destroy_instance(instance["id"]))
+
+
 if __name__ == "__main__":
     cli()
