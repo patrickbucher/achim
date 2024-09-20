@@ -1,21 +1,29 @@
 #!/usr/bin/env python3
 
-import os
 import sys
 
-from dotenv import load_dotenv
-from libcloud.compute.types import Provider
-from libcloud.compute.providers import get_driver
+from dotenv import dotenv_values
 
+from exoscale import Exoscale
 
-if __name__ == '__main__':
-    load_dotenv()
-    username = os.getenv('CLOUD_USERNAME')
-    api_key = os.getenv('CLOUD_API_KEY')
-    if not username or not api_key:
-        print('must provide CLOUD_USERNAME and CLOUD_API_KEY', file=sys.stderr)
+supported_sizes = []
+
+templates = {"debian12": "Linux Debian 12 (Bookworm) 64-bit"}
+
+supported_locations = []
+
+if __name__ == "__main__":
+    config = dotenv_values(".env")
+    keys = [
+        "EXOSCALE_API_KEY",
+        "EXOSCALE_API_SECRET",
+        "EXOSCALE_ENVIRONMENT",
+        "EXOSCALE_ZONE",
+    ]
+    if any(filter(lambda k: k not in config, keys)):
+        print("missing settings in .env file (see sample.env)", file=sys.stderr)
         sys.exit(1)
 
-    cls = get_driver(Provider.EXOSCALE)
-    driver = cls(username, api_key)
-    print(driver)
+    exo = Exoscale(config)
+    template = exo.get_template_by_name(templates["debian12"])
+    print(template)
