@@ -26,8 +26,15 @@ class Exoscale:
         )
         return list(filtered_types)
 
+    def stop_instance(self, id):
+        return self.put(f"instance/{id}:stop").json()
+
     def get_ssh_key(self, name):
         return self.get(f"ssh-key/{name}").json()
+
+    def get_instance_by_name(self, name):
+        instances = self.get("instance").json()["instances"]
+        return next(filter(lambda i: i["name"] == name, instances))
 
     def create_instance(self, name, template, instance_type, ssh_key, labels={}):
         payload = {
@@ -53,3 +60,8 @@ class Exoscale:
         headers = {"Content-Type": "application/json"}
         url = self.suffix_url(suffix)
         return requests.post(url, json=payload, auth=self.auth, headers=headers)
+
+    def put(self, suffix, payload=None):
+        headers = {"Content-Type": "application/json"}
+        url = self.suffix_url(suffix)
+        return requests.put(url, json=payload, auth=self.auth, headers=headers)

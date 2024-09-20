@@ -20,7 +20,7 @@ Create an instance:
     - [ ] generate inventory by labels
 - single
     - [x] create an instance
-    - [ ] stop an instance
+    - [x] stop an instance
     - [ ] start an instance
     - [ ] destroy an instance
 - multiple
