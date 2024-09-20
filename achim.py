@@ -58,13 +58,22 @@ def create_instance(ctx, name, keyname, context, group, purpose, owner):
     print(instance)
 
 
+@cli.command(help="Start a Compute Instance")
+@click.option("--name", help="instance name (hostname)")
+@click.pass_context
+def start_instance(ctx, name):
+    exo = ctx.obj["exo"]
+    instance = exo.get_instance_by_name(name)
+    print(exo.start_instance(instance["id"]))
+
+
 @cli.command(help="Stop a Compute Instance")
 @click.option("--name", help="instance name (hostname)")
 @click.pass_context
 def stop_instance(ctx, name):
     exo = ctx.obj["exo"]
     instance = exo.get_instance_by_name(name)
-    print(exo.stop_instance(instance['id']))
+    print(exo.stop_instance(instance["id"]))
 
 
 if __name__ == "__main__":

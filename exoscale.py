@@ -29,6 +29,9 @@ class Exoscale:
     def stop_instance(self, id):
         return self.put(f"instance/{id}:stop").json()
 
+    def start_instance(self, id):
+        return self.put(f"instance/{id}:start").json()
+
     def get_ssh_key(self, name):
         return self.get(f"ssh-key/{name}").json()
 
