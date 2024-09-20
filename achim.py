@@ -113,7 +113,8 @@ def inventory(ctx, file):
             if value not in sections:
                 sections[value] = []
             sections[value].append(ip)
-    for section, ips in sections.items():
+    for section in sorted(sections.keys()):
+        ips = sections[section]
         file.write(f"[{section}]\n")
         for ip in ips:
             file.write(f"{ip}\n")
