@@ -26,6 +26,9 @@ class Exoscale:
         )
         return list(filtered_types)
 
+    def get_instances(self):
+        return self.get(f"instance").json()["instances"]
+
     def start_instance(self, id):
         return self.put(f"instance/{id}:start").json()
 
