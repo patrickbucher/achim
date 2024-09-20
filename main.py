@@ -19,15 +19,19 @@ if __name__ == "__main__":
     keys = [
         "EXOSCALE_API_KEY",
         "EXOSCALE_API_SECRET",
-        "EXOSCALE_ENVIRONMENT",
         "EXOSCALE_ZONE",
+        "SSH_PUBLIC_KEY",
     ]
     if any(filter(lambda k: k not in config, keys)):
         print("missing settings in .env file (see sample.env)", file=sys.stderr)
         sys.exit(1)
 
     exo = Exoscale(config)
+
     template = exo.get_template_by_name(templates["debian12"])
     instance_types = exo.get_instance_types(instance_type_filter)
     smallest = sorted(instance_types, key=lambda it: it["memory"])[0]
-    print(smallest)
+    ssh_key = exo.get_ssh_key("patrick.bucher")
+
+    instance = exo.create_instance("bonanza", template, smallest, ssh_key)
+    print(instance)
