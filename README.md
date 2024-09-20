@@ -16,10 +16,17 @@ Create an instance:
 
 ## TODO
 
-- [x] create an instance
-- [ ] stop an instance
-- [ ] start an instance
-- [ ] destroy an instance
-- [ ] create multiple instances
-- [ ] add instance to inventory
-- [ ] increase usability via click CLI interface
+- inventory
+    - [ ] generate inventory by labels
+- single
+    - [x] create an instance
+    - [ ] stop an instance
+    - [ ] start an instance
+    - [ ] destroy an instance
+- multiple
+    - [ ] create instances from groups file
+    - [ ] stop ...
+    - [ ] start ...
+    - [ ] destroy ...
+- groups files
+    - [ ] assign tags to user to be used as labels
