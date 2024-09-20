@@ -15,6 +15,17 @@ class Exoscale:
         matches = filter(lambda t: t["name"] == name, templates)
         return next(matches)
 
+    def get_instance_types(self, rules):
+        def filter_rule(instance_type, key, value):
+            return instance_type[key] == value
+
+        instance_types = self.get("instance-type").json()["instance-types"]
+        filtered_types = filter(
+            lambda it: all([filter_rule(it, k, v) for (k, v) in rules.items()]),
+            instance_types,
+        )
+        return list(filtered_types)
+
     def suffix_url(self, suffix):
         return f"{self.base_url}/{suffix}"
 

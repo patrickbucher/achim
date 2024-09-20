@@ -6,11 +6,13 @@ from dotenv import dotenv_values
 
 from exoscale import Exoscale
 
-supported_sizes = []
-
 templates = {"debian12": "Linux Debian 12 (Bookworm) 64-bit"}
 
-supported_locations = []
+instance_type_filter = {
+    "authorized": True,
+    "family": "standard",
+    "cpus": 1,
+}
 
 if __name__ == "__main__":
     config = dotenv_values(".env")
@@ -26,4 +28,6 @@ if __name__ == "__main__":
 
     exo = Exoscale(config)
     template = exo.get_template_by_name(templates["debian12"])
-    print(template)
+    instance_types = exo.get_instance_types(instance_type_filter)
+    smallest = sorted(instance_types, key=lambda it: it["memory"])[0]
+    print(smallest)
