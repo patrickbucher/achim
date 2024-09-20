@@ -20,7 +20,6 @@ if __name__ == "__main__":
         "EXOSCALE_API_KEY",
         "EXOSCALE_API_SECRET",
         "EXOSCALE_ZONE",
-        "SSH_PUBLIC_KEY",
     ]
     if any(filter(lambda k: k not in config, keys)):
         print("missing settings in .env file (see sample.env)", file=sys.stderr)
@@ -32,6 +31,11 @@ if __name__ == "__main__":
     instance_types = exo.get_instance_types(instance_type_filter)
     smallest = sorted(instance_types, key=lambda it: it["memory"])[0]
     ssh_key = exo.get_ssh_key("patrick.bucher")
+    labels = {
+        "context": "m346", # static
+        "group": "inf23a", # TODO: from command-line argument
+        "purpose": "ssh-exercise", # TODO: from groups file (with fallback)
+    }
 
-    instance = exo.create_instance("bonanza", template, smallest, ssh_key)
+    instance = exo.create_instance("xanadu", template, smallest, ssh_key, labels)
     print(instance)

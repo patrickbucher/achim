@@ -4,7 +4,6 @@ import requests
 
 class Exoscale:
     def __init__(self, config):
-        self.ssh_public_key = config["SSH_PUBLIC_KEY"]
         self.auth = ExoscaleV2Auth(
             config["EXOSCALE_API_KEY"], config["EXOSCALE_API_SECRET"]
         )
@@ -30,7 +29,7 @@ class Exoscale:
     def get_ssh_key(self, name):
         return self.get(f"ssh-key/{name}").json()
 
-    def create_instance(self, name, template, instance_type, ssh_key):
+    def create_instance(self, name, template, instance_type, ssh_key, labels={}):
         payload = {
             "auto-start": True,
             "name": name,
@@ -38,7 +37,7 @@ class Exoscale:
             "template": template,
             "ssh-key": {"name": ssh_key["name"]},
             "disk-size": 10,
-            # TODO: consider labels
+            "labels": labels,
         }
         return self.post("instance", payload).json()
 
