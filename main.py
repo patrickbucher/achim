@@ -35,6 +35,7 @@ if __name__ == "__main__":
         "context": "m346", # static
         "group": "inf23a", # TODO: from command-line argument
         "purpose": "ssh-exercise", # TODO: from groups file (with fallback)
+        "owner": "patrick_bucher", # TODO: from groups file
     }
 
     instance = exo.create_instance("xanadu", template, smallest, ssh_key, labels)
