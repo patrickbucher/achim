@@ -2,9 +2,10 @@
 
 import sys
 
+import click
 from dotenv import dotenv_values
-
 from exoscale import Exoscale
+import yaml
 
 templates = {"debian12": "Linux Debian 12 (Bookworm) 64-bit"}
 
@@ -14,7 +15,10 @@ instance_type_filter = {
     "cpus": 1,
 }
 
-if __name__ == "__main__":
+
+@click.group(help="Manage Exoscale Compute Instances for Groups")
+@click.pass_context
+def cli(ctx):
     config = dotenv_values(".env")
     keys = [
         "EXOSCALE_API_KEY",
@@ -25,18 +29,34 @@ if __name__ == "__main__":
         print("missing settings in .env file (see sample.env)", file=sys.stderr)
         sys.exit(1)
 
-    exo = Exoscale(config)
+    ctx.ensure_object(dict)
+    ctx.obj["exo"] = Exoscale(config)
 
+
+@cli.command(help="Create a Compute Instance")
+@click.option("--name", required=True, help="instance name (hostname)")
+@click.option("--keyname", required=True, help="name of registered SSH key")
+@click.option("--context", help="context (label)", default="default")
+@click.option("--group", help="group (label)", default="default")
+@click.option("--purpose", help="purpose (label)", default="default")
+@click.option("--owner", help="owner (label)", default="default")
+@click.pass_context
+def create_instance(ctx, name, keyname, context, group, purpose, owner):
+    exo = ctx.obj["exo"]
     template = exo.get_template_by_name(templates["debian12"])
     instance_types = exo.get_instance_types(instance_type_filter)
     smallest = sorted(instance_types, key=lambda it: it["memory"])[0]
-    ssh_key = exo.get_ssh_key("patrick.bucher")
+    ssh_key = exo.get_ssh_key(keyname)
     labels = {
-        "context": "m346", # static
-        "group": "inf23a", # TODO: from command-line argument
-        "purpose": "ssh-exercise", # TODO: from groups file (with fallback)
-        "owner": "patrick_bucher", # TODO: from groups file
+        "context": context,
+        "group": group,
+        "purpose": purpose,
+        "owner": owner,
     }
-
-    instance = exo.create_instance("xanadu", template, smallest, ssh_key, labels)
+    labels = {k: v for (k, v) in labels.items() if v}
+    instance = exo.create_instance(name, template, smallest, ssh_key, labels)
     print(instance)
+
+
+if __name__ == "__main__":
+    cli()
