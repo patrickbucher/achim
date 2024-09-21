@@ -57,8 +57,10 @@ Create an Ansible inventory of existing instances, grouped by labels `context`,
 
 ## TODO
 
-- inventory
+- inventory/playbooks
     - [x] generate inventory by labels
+    - [x] add one section per owner to inventory
+    - [ ] generate users playbook from group file
 - single
     - [x] create an instance
     - [x] stop an instance

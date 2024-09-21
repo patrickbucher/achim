@@ -176,7 +176,7 @@ def inventory(ctx, file):
     for instance in instances:
         ip = instance["public-ip"]
         labels = instance["labels"]
-        for key in ["context", "group", "purpose"]:
+        for key in ["context", "group", "purpose", "owner"]:
             if key not in labels:
                 continue
             value = labels[key]
