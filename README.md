@@ -55,6 +55,12 @@ Create an Ansible inventory of existing instances, grouped by labels `context`,
 
     $ python achim.py inventory --file inventory.ini
 
+### Playbook
+
+Create an Ansible playbook to create a user for its instance with its SSH key authorized:
+
+    $ python achim.py user-playbook --group-file group.yaml --playbook students.yaml
+
 ## TODO
 
 - inventory/playbooks
