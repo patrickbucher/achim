@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <style type="text/css">
+        body {
+            margin: 0 auto;
+            font-family: sans-serif;
+            font-size: 24pt;
+            max-width: 1200px;
+        }
+
+        table {
+            border: none;
+        }
+
+        td, th {
+            border: none;
+            padding: 0.5em 1em;
+            text-align: left;
+        }
+
+        table tr:nth-child(even) td {
+            background: black;
+            color: white;
+        }
+        table tr:nth-child(odd) td {
+            background: white;
+            color: black;
+        }
+    </style>
+    <title>Instance Overview for {{ key }}={{ value }}</title>
+</head>
+
+<body>
+    <h1>Instance Overview for <tt>{{ key }}={{ value }}</tt></h1>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>IP</th>
+            <th>SSH Command</th>
+        </tr>
+        {% for (name, ip, ssh_cmd) in instances %}
+        <tr>
+            <td><tt>{{ name }}</tt></td>
+            <td><tt>{{ ip }}</tt></td>
+            <td><tt>{{ ssh_cmd }}</tt></td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+
+</html>

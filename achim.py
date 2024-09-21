@@ -5,6 +5,7 @@ import sys
 import click
 from dotenv import dotenv_values
 from exoscale import Exoscale
+from jinja2 import Template
 import yaml
 
 templates = {"debian12": "Linux Debian 12 (Bookworm) 64-bit"}
@@ -236,6 +237,29 @@ def user_playbook(group_file, playbook):
         }
         content.append(play)
     yaml.dump(content, playbook)
+
+
+@cli.command(help="Generate  Filtered HTML Overview Page for Instance Access Details")
+@click.option("--key", help="filter by label key (e.g. context, group)")
+@click.option("--value", help="filter by label value")
+@click.option("--file", type=click.File("w", encoding="utf-8"), help="HTML output file")
+@click.pass_context
+def overview(ctx, key, value, file):
+    exo = ctx.obj["exo"]
+    instances = exo.get_instances()
+    instances = [i for i in instances if i["labels"].get(key, "") == value]
+    if not instances:
+        print(f"no instances matched label filter {key}={value}", file=sys.stderr)
+        sys.exit(1)
+    output = []
+    for instance in sorted(instances, key=lambda i: i["name"]):
+        ip = instance["public-ip"]
+        name = instance["name"]
+        ssh_cmd = f"ssh {name}@{ip}"
+        output.append((name, ip, ssh_cmd))
+    with open("./templates/overview.html") as f:
+        template = Template(f.read())
+        file.write(template.render(key=key, value=value, instances=output))
 
 
 if __name__ == "__main__":

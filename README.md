@@ -78,8 +78,6 @@ Create an Ansible playbook to create a user for its instance with its SSH key au
     - [x] start instances from groups file
     - [x] destroy instances from groups file
 - reporting
-    - [ ] create textual output for group (SSH command)
-        - e.g. `ssh patrick.bucher@85.12.128.99`
-        - ordered by _last_ name!
+    - [x] create textual output for group (SSH command)
 - groups files
     - [ ] assign tags to user to be used as labels
