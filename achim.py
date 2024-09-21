@@ -126,6 +126,42 @@ def create_group(ctx, file, keyname, context):
     print(instances)
 
 
+@cli.command(help="Start Compute Instances for a Group")
+@click.option("--name", help="group name")
+@click.pass_context
+def start_group(ctx, name):
+    exo = ctx.obj["exo"]
+    instances = exo.get_instances()
+    instances = [i for i in instances if i["labels"].get("group", "") == name]
+    for instance in instances:
+        print(exo.start_instance(instance["id"]))
+
+
+@cli.command(help="Stop Compute Instances for a Group")
+@click.option("--name", help="group name")
+@click.pass_context
+def stop_group(ctx, name):
+    exo = ctx.obj["exo"]
+    instances = exo.get_instances()
+    instances = [i for i in instances if i["labels"].get("group", "") == name]
+    for instance in instances:
+        print(exo.stop_instance(instance["id"]))
+
+
+@cli.command(help="Destroy Compute Instances for a Group")
+@click.option("--name", help="group name")
+@click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
+@click.pass_context
+def destroy_group(ctx, name, sure):
+    if not sure:
+        return
+    exo = ctx.obj["exo"]
+    instances = exo.get_instances()
+    instances = [i for i in instances if i["labels"].get("group", "") == name]
+    for instance in instances:
+        print(exo.destroy_instance(instance["id"]))
+
+
 @cli.command(help="Generate an Ansible Inventory by Instance Labels")
 @click.option(
     "--file",

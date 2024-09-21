@@ -30,7 +30,21 @@ Destroy an instance:
 
 ### Groups
 
-TODO: implement and document
+Create instances for a group (as defined in `group.yaml`):
+
+    $ python achim.py create-group --file group.yaml --context m346 --keyname patrick.bucher
+
+Start instances for a group:
+
+    $ python achim.py start-group --name students
+
+Stop instances for a group:
+
+    $ python achim.py stop-group --name students
+
+Destroy instances for a group:
+
+    $ python achim.py stop-group --name students --sure
 
 ### Inventory
 
@@ -50,8 +64,8 @@ Create an Ansible inventory of existing instances, grouped by labels `context`,
     - [x] destroy an instance
 - multiple
     - [x] create instances from groups file
-    - [ ] stop ...
-    - [ ] start ...
-    - [ ] destroy ...
+    - [x] stop instances from groups file
+    - [x] start instances from groups file
+    - [x] destroy instances from groups file
 - groups files
     - [ ] assign tags to user to be used as labels
