@@ -106,9 +106,9 @@ def destroy_instance(ctx, name, sure):
 def create_group(ctx, file, keyname, context):
     exo = ctx.obj["exo"]
     existing = exo.get_instances()
-    groups = yaml.load(file.read(), Loader=yaml.SafeLoader)
-    group_name = groups["name"]
-    users = groups["users"]
+    group = yaml.load(file.read(), Loader=yaml.SafeLoader)
+    group_name = group["name"]
+    users = group["users"]
     user_names = {u["name"] for u in users}
     existing_names = {e["name"] for e in existing}
     already_used = user_names.intersection(existing_names)
@@ -189,6 +189,53 @@ def inventory(ctx, file):
         for ip in ips:
             file.write(f"{ip}\n")
         file.write("\n")
+
+
+@cli.command(help="Generate an Ansible Playbook for Group Users")
+@click.option(
+    "--group-file",
+    type=click.File("r", encoding="utf-8"),
+    help="groups file to be read",
+)
+@click.option(
+    "--playbook",
+    type=click.File("w", encoding="utf-8"),
+    help="playbook file to be written",
+)
+def user_playbook(group_file, playbook):
+    group = yaml.load(group_file.read(), Loader=yaml.SafeLoader)
+    content = []
+    for user in group["users"]:
+        user_name = user["name"].replace("_", ".")
+        ssh_key = user["ssh-key"]
+        play = {
+            "name": f"User Setup for {user_name}",
+            "hosts": user_name,
+            "become": True,
+            "tasks": [
+                {
+                    "name": "User Created",
+                    "user": {
+                        "name": user_name,
+                        "shell": "/usr/bin/bash",
+                        "create_home": True,
+                        "home": f"/home/{user_name}",
+                        "password": "*",
+                        "append": True,
+                        "groups": ["sudo"],
+                    },
+                },
+                {
+                    "name": "Key Authorized",
+                    "authorized_key": {
+                        "user": user_name,
+                        "key": ssh_key,
+                    },
+                },
+            ],
+        }
+        content.append(play)
+    yaml.dump(content, playbook)
 
 
 if __name__ == "__main__":
