@@ -87,6 +87,12 @@ Create an Ansible playbook to create a user for its instance with its SSH key au
 
     $ python achim.py user-playbook --group-file group.yaml --playbook students.yaml
 
+### Overview
+
+Create an HTML overview page for names, IPs, and `ssh` commands:
+
+    $ python achim.py overview --key group --value students --file overview.html
+
 ## TODO
 
 - inventory/playbooks
