@@ -47,6 +47,11 @@ def create_instance(ctx, name, keyname, context, group, purpose, owner):
     if any([instance["name"] == name for instance in existing]):
         print(f"name '{name}' is already in use", file=sys.stderr)
         sys.exit(1)
+    instance = do_create_instance(exo, name, keyname, context, group, purpose, owner)
+    print(instance)
+
+
+def do_create_instance(exo, name, keyname, context="", group="", purpose="", owner=""):
     template = exo.get_template_by_name(templates["debian12"])
     instance_types = exo.get_instance_types(instance_type_filter)
     smallest = sorted(instance_types, key=lambda it: it["memory"])[0]
@@ -58,8 +63,7 @@ def create_instance(ctx, name, keyname, context, group, purpose, owner):
         "owner": owner,
     }
     labels = {k: v for (k, v) in labels.items() if v}
-    instance = exo.create_instance(name, template, smallest, ssh_key, labels)
-    print(instance)
+    return exo.create_instance(name, template, smallest, ssh_key, labels)
 
 
 @cli.command(help="Start a Compute Instance")
@@ -90,6 +94,36 @@ def destroy_instance(ctx, name, sure):
     exo = ctx.obj["exo"]
     instance = exo.get_instance_by_name(name)
     print(exo.destroy_instance(instance["id"]))
+
+
+@cli.command(help="Create Compute Instances for a Group")
+@click.option(
+    "--file", type=click.File("r", encoding="utf-8"), help="groups file to be used"
+)
+@click.option("--context", help="context (label)", default="default")
+@click.option("--keyname", required=True, help="name of registered SSH key")
+@click.pass_context
+def create_group(ctx, file, keyname, context):
+    exo = ctx.obj["exo"]
+    existing = exo.get_instances()
+    groups = yaml.load(file.read(), Loader=yaml.SafeLoader)
+    group_name = groups["name"]
+    users = groups["users"]
+    user_names = {u["name"] for u in users}
+    existing_names = {e["name"] for e in existing}
+    already_used = user_names.intersection(existing_names)
+    if already_used:
+        print(f"names '{already_used}' are already in use", file=sys.stderr)
+        sys.exit(1)
+    instances = []
+    for user in users:
+        name = user["name"].replace("_", ".")
+        purpose = user.get("purpose", "")
+        instance = do_create_instance(
+            exo, name, keyname, context, group_name, purpose, name
+        )
+        instances.append(instance)
+    print(instances)
 
 
 @cli.command(help="Generate an Ansible Inventory by Instance Labels")

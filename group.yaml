@@ -1,0 +1,13 @@
+name: students
+users:
+  - email: foo_bar@acme.org
+    name: foo_bar
+    ssh-key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJhx+5Z/Ao+9w3EujyXcKcE8Wzw0uyApawro5dlMXQwa patrick.bucher@sluz.ch"
+    purpose: exercises
+  - email: qux_baz@acme.org
+    name: qux_baz
+    ssh-key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJhx+5Z/Ao+9w3EujyXcKcE8Wzw0uyApawro5dlMXQwa patrick.bucher@sluz.ch"
+    purpose: exam
+  - email: ding_dong@acme.org
+    name: ding_dong
+    ssh-key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJhx+5Z/Ao+9w3EujyXcKcE8Wzw0uyApawro5dlMXQwa patrick.bucher@sluz.ch"
