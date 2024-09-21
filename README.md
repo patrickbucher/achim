@@ -1,5 +1,7 @@
 # achim: Advanced Cloud Hyperscaling Infrastructure Manager
 
+Prototype for Exoscale Compute Instances
+
 ## Usage
 
 Get help:
