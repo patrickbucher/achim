@@ -1,11 +1,9 @@
-#!/usr/bin/env python3
-
 import sys
 
 import click
 from dotenv import dotenv_values
-from exoscale import Exoscale
-from jinja2 import Template
+from achim.exoscale import Exoscale
+from jinja2 import Environment, PackageLoader, select_autoescape
 import yaml
 
 templates = {"debian12": "Linux Debian 12 (Bookworm) 64-bit"}
@@ -257,10 +255,6 @@ def overview(ctx, key, value, file):
         name = instance["name"]
         ssh_cmd = f"ssh {name}@{ip}"
         output.append((name, ip, ssh_cmd))
-    with open("./templates/overview.html") as f:
-        template = Template(f.read())
-        file.write(template.render(key=key, value=value, instances=output))
-
-
-if __name__ == "__main__":
-    cli()
+    env = Environment(loader=PackageLoader("achim"), autoescape=select_autoescape())
+    template = env.get_template("overview.html")
+    file.write(template.render(key=key, value=value, instances=output))
