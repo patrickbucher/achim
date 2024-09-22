@@ -4,6 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "achim"
+authors = [{ name = "Patrick Bucher", email = "patrick.bucher@mailbox.org" }]
+description = "Advanced Cloud Hyperscaling Infrastructure Manager"
+readme = "README.md"
+keywords = ["Cloud", "Exoscale", "Compute"]
+license = { text = "MIT" }
+classifiers = ["Programming Language :: Python :: 3"]
 version = "0.0.2"
 dependencies = [
     "click",

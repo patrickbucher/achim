@@ -114,4 +114,4 @@ Create an HTML overview page for names, IPs, and `ssh` commands:
 - groups files
     - [ ] assign tags to user to be used as labels
 - packaging
-    - [ ] deploy using setuptools
+    - [x] deploy using setuptools
