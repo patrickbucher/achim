@@ -32,66 +32,66 @@ Fill in all the data in `.env`:
 
 Get help:
 
-    $ python achim.py --help
+    $ achim --help
 
 Get help on a command (e.g. `create-instance`):
 
-    $ python achim.py create-instance --help
+    $ achim create-instance --help
 
 ### Instances
 
 Create an instance:
 
-    $ python achim.py create-instance --name demo --keyname patrick.bucher
+    $ achim create-instance --name demo --keyname patrick.bucher
 
 Start an instance:
 
-    $ python achim.py start-instance --name demo
+    $ achim start-instance --name demo
 
 Stop an instance:
 
-    $ python achim.py stop-instance --name demo
+    $ achim stop-instance --name demo
 
 Destroy an instance:
 
-    $ python achim.py destroy-instance --name demo --sure
+    $ achim destroy-instance --name demo --sure
 
 ### Groups
 
 Create instances for a group (as defined in `group.yaml`):
 
-    $ python achim.py create-group --file group.yaml --context m346 --keyname patrick.bucher
+    $ achim create-group --file group.yaml --context m346 --keyname patrick.bucher
 
 Start instances for a group:
 
-    $ python achim.py start-group --name students
+    $ achim start-group --name students
 
 Stop instances for a group:
 
-    $ python achim.py stop-group --name students
+    $ achim stop-group --name students
 
 Destroy instances for a group:
 
-    $ python achim.py stop-group --name students --sure
+    $ achim stop-group --name students --sure
 
 ### Inventory
 
 Create an Ansible inventory of existing instances, grouped by labels `context`,
 `group`, and `purpose`:
 
-    $ python achim.py inventory --file inventory.ini
+    $ achim inventory --file inventory.ini
 
 ### Playbook
 
 Create an Ansible playbook to create a user for its instance with its SSH key authorized:
 
-    $ python achim.py user-playbook --group-file group.yaml --playbook students.yaml
+    $ achim user-playbook --group-file group.yaml --playbook students.yaml
 
 ### Overview
 
 Create an HTML overview page for names, IPs, and `ssh` commands:
 
-    $ python achim.py overview --key group --value students --file overview.html
+    $ achim overview --key group --value students --file overview.html
 
 ## TODO
 
