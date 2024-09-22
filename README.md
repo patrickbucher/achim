@@ -14,9 +14,9 @@ Activate it (Linux/Bash):
 
     $ . env/bin/activate
 
-Install the dependencies:
+Install `achim` in editable mode:
 
-    $ pip install -r requirements.txt
+    $ pip install -e .
 
 Create a `.env` file:
 
