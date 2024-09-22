@@ -1,10 +1,8 @@
-#!/usr/bin/env python3
-
 import sys
 
 import click
 from dotenv import dotenv_values
-from exoscale import Exoscale
+from achim.exoscale import Exoscale
 from jinja2 import Template
 import yaml
 
@@ -260,7 +258,3 @@ def overview(ctx, key, value, file):
     with open("./templates/overview.html") as f:
         template = Template(f.read())
         file.write(template.render(key=key, value=value, instances=output))
-
-
-if __name__ == "__main__":
-    cli()

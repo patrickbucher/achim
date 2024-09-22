@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "achim"
+version = "0.0.2"
+dependencies = [
+    "click",
+    "python-dotenv",
+    "Jinja2",
+    "PyYAML",
+    "requests",
+    "requests-exoscale-auth",
+]
+
+[project.scripts]
+achim = "achim:cli"
