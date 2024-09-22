@@ -113,3 +113,5 @@ Create an HTML overview page for names, IPs, and `ssh` commands:
     - [x] create textual output for group (SSH command)
 - groups files
     - [ ] assign tags to user to be used as labels
+- packaging
+    - [ ] deploy using setuptools
