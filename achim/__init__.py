@@ -6,13 +6,14 @@ from achim.exoscale import Exoscale
 from jinja2 import Environment, PackageLoader, select_autoescape
 import yaml
 
-templates = {"debian12": "Linux Debian 12 (Bookworm) 64-bit"}
 
+templates = {"debian12": "Linux Debian 12 (Bookworm) 64-bit"}
 instance_type_filter = {
     "authorized": True,
     "family": "standard",
     "cpus": 1,
 }
+default_user_name = "user"
 
 
 @click.group(help="Manage Exoscale Compute Instances for Groups")
@@ -116,10 +117,11 @@ def create_group(ctx, file, keyname, context):
         sys.exit(1)
     instances = []
     for user in users:
-        name = user["name"].replace("_", ".")
+        host_name = to_host_name(user["name"])
+        owner_name = user["name"]
         purpose = user.get("purpose", "")
         instance = do_create_instance(
-            exo, name, keyname, context, group_name, purpose, name
+            exo, host_name, keyname, context, group_name, purpose, owner_name
         )
         instances.append(instance)
     print(instances)
@@ -205,11 +207,12 @@ def user_playbook(group_file, playbook):
     group = yaml.load(group_file.read(), Loader=yaml.SafeLoader)
     content = []
     for user in group["users"]:
-        user_name = user["name"].replace("_", ".")
+        host_name = to_host_name(user["name"])
+        user_name = default_user_name
         ssh_key = user["ssh-key"]
         play = {
             "name": f"User Setup for {user_name}",
-            "hosts": user_name,
+            "hosts": host_name,
             "become": True,
             "tasks": [
                 {
@@ -245,16 +248,26 @@ def user_playbook(group_file, playbook):
 def overview(ctx, key, value, file):
     exo = ctx.obj["exo"]
     instances = exo.get_instances()
-    instances = [i for i in instances if i["labels"].get(key, "") == value]
+    if key and value:
+        instances = [i for i in instances if i["labels"].get(key, "") == value]
     if not instances:
         print(f"no instances matched label filter {key}={value}", file=sys.stderr)
         sys.exit(1)
     output = []
     for instance in sorted(instances, key=lambda i: i["name"]):
+        owner = instance["labels"]["owner"]
         ip = instance["public-ip"]
-        name = instance["name"]
-        ssh_cmd = f"ssh {name}@{ip}"
-        output.append((name, ip, ssh_cmd))
+        host_name = instance["name"]
+        ssh_cmd = f"ssh {default_user_name}@{ip}"
+        output.append((owner, host_name, ip, ssh_cmd))
     env = Environment(loader=PackageLoader("achim"), autoescape=select_autoescape())
     template = env.get_template("overview.html")
-    file.write(template.render(key=key, value=value, instances=output))
+    if key and value:
+        condition = f"{key}={value}"
+    else:
+        condition = ""
+    file.write(template.render(condition=condition, instances=output))
+
+
+def to_host_name(name):
+    return name.replace(".", "-")

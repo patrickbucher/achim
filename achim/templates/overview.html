@@ -30,22 +30,24 @@
             color: black;
         }
     </style>
-    <title>Instance Overview for {{ key }}={{ value }}</title>
+    <title>Instance Overview</title>
 </head>
 
 <body>
-    <h1>Instance Overview for <tt>{{ key }}={{ value }}</tt></h1>
+    <h1>Instance Overview{% if condition %} for <tt>{{ condition }}</tt>{% endif %}</h1>
     <table>
         <tr>
-            <th>Name</th>
-            <th>IP</th>
+            <th>Owner</th>
             <th>SSH Command</th>
+            <th>Host Name</th>
+            <th>IP</th>
         </tr>
-        {% for (name, ip, ssh_cmd) in instances %}
+        {% for (owner, host_name, ip, ssh_cmd) in instances %}
         <tr>
-            <td><tt>{{ name }}</tt></td>
+            <td><tt>{{ owner }}</tt></td>
+            <td><tt><strong>{{ ssh_cmd }}</strong></tt></td>
+            <td><tt>{{ host_name }}</tt></td>
             <td><tt>{{ ip }}</tt></td>
-            <td><tt>{{ ssh_cmd }}</tt></td>
         </tr>
         {% endfor %}
     </table>
