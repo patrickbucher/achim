@@ -109,9 +109,9 @@ def create_group(ctx, file, keyname, context):
     group = yaml.load(file.read(), Loader=yaml.SafeLoader)
     group_name = group["name"]
     users = group["users"]
-    user_names = {u["name"] for u in users}
+    host_names = {to_host_name(u["name"]) for u in users}
     existing_names = {e["name"] for e in existing}
-    already_used = user_names.intersection(existing_names)
+    already_used = host_names.intersection(existing_names)
     if already_used:
         print(f"names '{already_used}' are already in use", file=sys.stderr)
         sys.exit(1)
@@ -270,4 +270,4 @@ def overview(ctx, key, value, file):
 
 
 def to_host_name(name):
-    return name.replace(".", "-")
+    return name.replace(".", "-").replace("_", "-")
