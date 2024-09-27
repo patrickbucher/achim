@@ -172,14 +172,12 @@ def http_get_group(ctx, name, suffix):
     exo = ctx.obj["exo"]
     instances = exo.get_instances()
     instances = [i for i in instances if i["labels"].get("group", "") == name]
-    status_codes = {}
     for instance in instances:
         ip = instance["public-ip"]
         owner = instance["labels"]["owner"]
         url = f"http://{ip}/{suffix}"
         res = requests.get(url)
         status = res.status_code
-        status_codes[ip] = status
         print(f"{ip}\t{status}\t{owner}")
 
 
