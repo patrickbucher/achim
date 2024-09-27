@@ -164,11 +164,11 @@ def destroy_group(ctx, name, sure):
         print(exo.destroy_instance(instance["id"]))
 
 
-@cli.command(help="Tests a Service on the Instances of the Group")
+@cli.command(help="Tests an HTTP Service on the Instances of the Group")
 @click.option("--name", help="group name")
 @click.option("--suffix", help="URL suffix", default="")
 @click.pass_context
-def test_group(ctx, name, suffix):
+def http_get_group(ctx, name, suffix):
     exo = ctx.obj["exo"]
     instances = exo.get_instances()
     instances = [i for i in instances if i["labels"].get("group", "") == name]
@@ -180,9 +180,7 @@ def test_group(ctx, name, suffix):
         res = requests.get(url)
         status = res.status_code
         status_codes[ip] = status
-        print(f'{ip}\t{status}\t{owner}')
-    #for ip, status in status_codes.items():
-    #    print(f'{ip}\t{status}')
+        print(f"{ip}\t{status}\t{owner}")
 
 
 @cli.command(help="Generate an Ansible Inventory by Instance Labels")
