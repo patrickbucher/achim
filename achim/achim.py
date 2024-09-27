@@ -176,8 +176,11 @@ def http_get_group(ctx, name, suffix):
         ip = instance["public-ip"]
         owner = instance["labels"]["owner"]
         url = f"http://{ip}/{suffix}"
-        res = requests.get(url)
-        status = res.status_code
+        try:
+            res = requests.get(url)
+            status = res.status_code
+        except Exception:
+            status = 'ERR'
         print(f"{ip}\t{status}\t{owner}")
 
 
