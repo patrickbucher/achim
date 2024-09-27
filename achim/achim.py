@@ -4,6 +4,7 @@ import click
 from dotenv import dotenv_values
 from achim.exoscale import Exoscale
 from jinja2 import Environment, PackageLoader, select_autoescape
+import requests
 import yaml
 
 
@@ -161,6 +162,27 @@ def destroy_group(ctx, name, sure):
     instances = [i for i in instances if i["labels"].get("group", "") == name]
     for instance in instances:
         print(exo.destroy_instance(instance["id"]))
+
+
+@cli.command(help="Tests a Service on the Instances of the Group")
+@click.option("--name", help="group name")
+@click.option("--suffix", help="URL suffix", default="")
+@click.pass_context
+def test_group(ctx, name, suffix):
+    exo = ctx.obj["exo"]
+    instances = exo.get_instances()
+    instances = [i for i in instances if i["labels"].get("group", "") == name]
+    status_codes = {}
+    for instance in instances:
+        ip = instance["public-ip"]
+        owner = instance["labels"]["owner"]
+        url = f"http://{ip}/{suffix}"
+        res = requests.get(url)
+        status = res.status_code
+        status_codes[ip] = status
+        print(f'{ip}\t{status}\t{owner}')
+    #for ip, status in status_codes.items():
+    #    print(f'{ip}\t{status}')
 
 
 @cli.command(help="Generate an Ansible Inventory by Instance Labels")
