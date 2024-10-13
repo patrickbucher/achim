@@ -41,18 +41,23 @@ def cli(ctx):
 @click.option("--group", help="group (label)", default="default")
 @click.option("--purpose", help="purpose (label)", default="default")
 @click.option("--owner", help="owner (label)", default="default")
+@click.option("--autostart", help="automatically start VM", is_flag=True, default=False)
 @click.pass_context
-def create_instance(ctx, name, keyname, context, group, purpose, owner):
+def create_instance(ctx, name, keyname, context, group, purpose, owner, autostart):
     exo = ctx.obj["exo"]
     existing = exo.get_instances()
     if any([instance["name"] == name for instance in existing]):
         print(f"name '{name}' is already in use", file=sys.stderr)
         sys.exit(1)
-    instance = do_create_instance(exo, name, keyname, context, group, purpose, owner)
+    instance = do_create_instance(
+        exo, name, keyname, context, group, purpose, owner, autostart
+    )
     print(instance)
 
 
-def do_create_instance(exo, name, keyname, context="", group="", purpose="", owner=""):
+def do_create_instance(
+    exo, name, keyname, context="", group="", purpose="", owner="", autostart=False
+):
     template = exo.get_template_by_name(templates["debian12"])
     instance_types = exo.get_instance_types(instance_type_filter)
     smallest = sorted(instance_types, key=lambda it: it["memory"])[0]
@@ -64,7 +69,7 @@ def do_create_instance(exo, name, keyname, context="", group="", purpose="", own
         "owner": owner,
     }
     labels = {k: v for (k, v) in labels.items() if v}
-    return exo.create_instance(name, template, smallest, ssh_key, labels)
+    return exo.create_instance(name, template, smallest, ssh_key, labels, autostart)
 
 
 @cli.command(help="Start a Compute Instance")
@@ -103,8 +108,9 @@ def destroy_instance(ctx, name, sure):
 )
 @click.option("--context", help="context (label)", default="default")
 @click.option("--keyname", required=True, help="name of registered SSH key")
+@click.option("--autostart", help="automatically start VM", is_flag=True, default=False)
 @click.pass_context
-def create_group(ctx, file, keyname, context):
+def create_group(ctx, file, keyname, context, autostart):
     exo = ctx.obj["exo"]
     existing = exo.get_instances()
     group = yaml.load(file.read(), Loader=yaml.SafeLoader)
@@ -122,7 +128,7 @@ def create_group(ctx, file, keyname, context):
         owner_name = user["name"]
         purpose = user.get("purpose", "")
         instance = do_create_instance(
-            exo, host_name, keyname, context, group_name, purpose, owner_name
+            exo, host_name, keyname, context, group_name, purpose, owner_name, autostart
         )
         instances.append(instance)
     print(instances)
@@ -180,7 +186,7 @@ def http_get_group(ctx, name, suffix):
             res = requests.get(url)
             status = res.status_code
         except Exception:
-            status = 'ERR'
+            status = "ERR"
         print(f"{ip}\t{status}\t{owner}")
 
 
@@ -276,11 +282,16 @@ def overview(ctx, key, value, file):
         sys.exit(1)
     output = []
     for instance in sorted(instances, key=lambda i: i["name"]):
-        owner = instance["labels"]["owner"]
+        # owner = instance["labels"]["owner"]
         ip = instance["public-ip"]
         host_name = instance["name"]
         ssh_cmd = f"ssh {default_user_name}@{ip}"
-        output.append((owner, host_name, ip, ssh_cmd))
+        name_parts = host_name.split("-")
+        first_name = name_parts[0].capitalize()
+        last_name = name_parts[1].capitalize()
+        swiss_name = f"{last_name}, {first_name}"
+        output.append((swiss_name, host_name, ip, ssh_cmd))
+    output = sorted(output, key=lambda o: o[0])
     env = Environment(loader=PackageLoader("achim"), autoescape=select_autoescape())
     template = env.get_template("overview.html")
     if key and value:

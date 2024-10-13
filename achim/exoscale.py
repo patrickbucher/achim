@@ -45,9 +45,11 @@ class Exoscale:
         instances = self.get("instance").json()["instances"]
         return next(filter(lambda i: i["name"] == name, instances))
 
-    def create_instance(self, name, template, instance_type, ssh_key, labels={}):
+    def create_instance(
+        self, name, template, instance_type, ssh_key, labels={}, autostart=False
+    ):
         payload = {
-            "auto-start": False,
+            "auto-start": autostart,
             "name": name,
             "instance-type": instance_type,
             "template": template,
