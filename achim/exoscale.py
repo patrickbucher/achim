@@ -47,7 +47,7 @@ class Exoscale:
 
     def create_instance(self, name, template, instance_type, ssh_key, labels={}):
         payload = {
-            "auto-start": True,
+            "auto-start": False,
             "name": name,
             "instance-type": instance_type,
             "template": template,
