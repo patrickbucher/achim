@@ -174,7 +174,7 @@ def destroy_group(ctx, name, sure):
 @click.option("--name", help="group name")
 @click.option("--suffix", help="URL suffix", default="")
 @click.pass_context
-def http_get_group(ctx, name, suffix):
+def probe(ctx, name, suffix):
     exo = ctx.obj["exo"]
     instances = exo.get_instances()
     instances = [i for i in instances if i["labels"].get("group", "") == name]
