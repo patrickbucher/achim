@@ -109,8 +109,14 @@ def destroy_instance(ctx, name, sure):
 @click.option("--context", help="context (label)", default="default")
 @click.option("--keyname", required=True, help="name of registered SSH key")
 @click.option("--autostart", help="automatically start VM", is_flag=True, default=False)
+@click.option(
+    "--ignore-existing",
+    help="create group even if vms from it already exists",
+    is_flag=True,
+    default=False,
+)
 @click.pass_context
-def create_group(ctx, file, keyname, context, autostart):
+def create_group(ctx, file, keyname, context, autostart, ignore_existing):
     exo = ctx.obj["exo"]
     existing = exo.get_instances()
     group = yaml.load(file.read(), Loader=yaml.SafeLoader)
@@ -119,7 +125,7 @@ def create_group(ctx, file, keyname, context, autostart):
     host_names = {to_host_name(u["name"]) for u in users}
     existing_names = {e["name"] for e in existing}
     already_used = host_names.intersection(existing_names)
-    if already_used:
+    if already_used and not ignore_existing:
         print(f"names '{already_used}' are already in use", file=sys.stderr)
         sys.exit(1)
     instances = []
@@ -127,6 +133,8 @@ def create_group(ctx, file, keyname, context, autostart):
         host_name = to_host_name(user["name"])
         owner_name = user["name"]
         purpose = user.get("purpose", "")
+        if host_name in already_used and ignore_existing:
+            continue
         instance = do_create_instance(
             exo, host_name, keyname, context, group_name, purpose, owner_name, autostart
         )
