@@ -146,8 +146,16 @@ def create_group(ctx, file, keyname, context, autostart, ignore_existing):
         owner_name = user["name"]
         if host_name in already_used and ignore_existing:
             continue
+        permanent = True if user.get("permanent", False) else False
         instance = do_create_instance(
-            exo, host_name, keyname, context, group_name, owner_name, autostart
+            exo,
+            host_name,
+            keyname,
+            context,
+            group_name,
+            owner_name,
+            autostart,
+            permanent,
         )
         instances.append(instance)
     print(instances)
@@ -178,14 +186,26 @@ def stop_group(ctx, name):
 @cli.command(help="Destroy Compute Instances for a Group")
 @click.option("--name", help="group name")
 @click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
+@click.option(
+    "--destroy-permanent",
+    is_flag=True,
+    prompt=False,
+    default=False,
+    help="Destroy VMs marked as 'permanent'",
+)
 @click.pass_context
-def destroy_group(ctx, name, sure):
+def destroy_group(ctx, name, sure, destroy_permanent):
     if not sure:
         return
     exo = ctx.obj["exo"]
     instances = exo.get_instances()
     instances = [i for i in instances if i["labels"].get("group", "") == name]
     for instance in instances:
+        if instance["labels"].get("permanent", False) and not destroy_permanent:
+            print(
+                f"skipping {instance['name']}; destroy using --destroy-permanent flag"
+            )
+            continue
         print(exo.destroy_instance(instance["id"]))
 
 
