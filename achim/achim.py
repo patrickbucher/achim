@@ -39,24 +39,21 @@ def cli(ctx):
 @click.option("--keyname", required=True, help="name of registered SSH key")
 @click.option("--context", help="context (label)", default="default")
 @click.option("--group", help="group (label)", default="default")
-@click.option("--purpose", help="purpose (label)", default="default")
 @click.option("--owner", help="owner (label)", default="default")
 @click.option("--autostart", help="automatically start VM", is_flag=True, default=False)
 @click.pass_context
-def create_instance(ctx, name, keyname, context, group, purpose, owner, autostart):
+def create_instance(ctx, name, keyname, context, group, owner, autostart):
     exo = ctx.obj["exo"]
     existing = exo.get_instances()
     if any([instance["name"] == name for instance in existing]):
         print(f"name '{name}' is already in use", file=sys.stderr)
         sys.exit(1)
-    instance = do_create_instance(
-        exo, name, keyname, context, group, purpose, owner, autostart
-    )
+    instance = do_create_instance(exo, name, keyname, context, group, owner, autostart)
     print(instance)
 
 
 def do_create_instance(
-    exo, name, keyname, context="", group="", purpose="", owner="", autostart=False
+    exo, name, keyname, context="", group="", owner="", autostart=False
 ):
     template = exo.get_template_by_name(templates["debian12"])
     instance_types = exo.get_instance_types(instance_type_filter)
@@ -65,7 +62,6 @@ def do_create_instance(
     labels = {
         "context": context,
         "group": group,
-        "purpose": purpose,
         "owner": owner,
     }
     labels = {k: v for (k, v) in labels.items() if v}
@@ -132,11 +128,10 @@ def create_group(ctx, file, keyname, context, autostart, ignore_existing):
     for user in users:
         host_name = to_host_name(user["name"])
         owner_name = user["name"]
-        purpose = user.get("purpose", "")
         if host_name in already_used and ignore_existing:
             continue
         instance = do_create_instance(
-            exo, host_name, keyname, context, group_name, purpose, owner_name, autostart
+            exo, host_name, keyname, context, group_name, owner_name, autostart
         )
         instances.append(instance)
     print(instances)
@@ -212,7 +207,7 @@ def inventory(ctx, file):
     for instance in instances:
         ip = instance["public-ip"]
         labels = instance["labels"] | {"name": instance["name"]}
-        for key in ["context", "group", "purpose", "name"]:
+        for key in ["context", "group", "name"]:
             if key not in labels:
                 continue
             value = labels[key]
