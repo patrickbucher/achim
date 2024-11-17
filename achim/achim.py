@@ -41,19 +41,24 @@ def cli(ctx):
 @click.option("--group", help="group (label)", default="default")
 @click.option("--owner", help="owner (label)", default="default")
 @click.option("--autostart", help="automatically start VM", is_flag=True, default=False)
+@click.option(
+    "--permanent", help="require flag to destroy", is_flag=True, default=False
+)
 @click.pass_context
-def create_instance(ctx, name, keyname, context, group, owner, autostart):
+def create_instance(ctx, name, keyname, context, group, owner, autostart, permanent):
     exo = ctx.obj["exo"]
     existing = exo.get_instances()
     if any([instance["name"] == name for instance in existing]):
         print(f"name '{name}' is already in use", file=sys.stderr)
         sys.exit(1)
-    instance = do_create_instance(exo, name, keyname, context, group, owner, autostart)
+    instance = do_create_instance(
+        exo, name, keyname, context, group, owner, autostart, permanent
+    )
     print(instance)
 
 
 def do_create_instance(
-    exo, name, keyname, context="", group="", owner="", autostart=False
+    exo, name, keyname, context="", group="", owner="", autostart=False, permanent=False
 ):
     template = exo.get_template_by_name(templates["debian12"])
     instance_types = exo.get_instance_types(instance_type_filter)
@@ -63,6 +68,7 @@ def do_create_instance(
         "context": context,
         "group": group,
         "owner": owner,
+        "permanent": permanent,
     }
     labels = {k: v for (k, v) in labels.items() if v}
     return exo.create_instance(name, template, smallest, ssh_key, labels, autostart)
@@ -89,12 +95,22 @@ def stop_instance(ctx, name):
 @cli.command(help="Destroy a Compute Instance")
 @click.option("--name", help="instance name (hostname)")
 @click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
+@click.option(
+    "--destroy-permanent",
+    is_flag=True,
+    prompt=False,
+    default=False,
+    help="Destroy VM marked as 'permanent'",
+)
 @click.pass_context
-def destroy_instance(ctx, name, sure):
+def destroy_instance(ctx, name, sure, destroy_permanent):
     if not sure:
         return
     exo = ctx.obj["exo"]
     instance = exo.get_instance_by_name(name)
+    if instance["labels"].get("permanent", False) and not destroy_permanent:
+        print(f"deleting permanent instance {name} requires --destroy-permanent flag")
+        return
     print(exo.destroy_instance(instance["id"]))
 
 
@@ -285,7 +301,6 @@ def overview(ctx, key, value, file):
         sys.exit(1)
     output = []
     for instance in sorted(instances, key=lambda i: i["name"]):
-        # owner = instance["labels"]["owner"]
         ip = instance["public-ip"]
         host_name = instance["name"]
         ssh_cmd = f"ssh {default_user_name}@{ip}"
