@@ -92,26 +92,3 @@ Create an Ansible playbook to create a user for its instance with its SSH key au
 Create an HTML overview page for names, IPs, and `ssh` commands:
 
     $ achim overview --key group --value students --file overview.html
-
-## TODO
-
-- inventory/playbooks
-    - [x] generate inventory by labels
-    - [x] add one section per owner to inventory
-    - [x] generate users playbook from group file
-- single
-    - [x] create an instance
-    - [x] stop an instance
-    - [x] start an instance
-    - [x] destroy an instance
-- multiple
-    - [x] create instances from groups file
-    - [x] stop instances from groups file
-    - [x] start instances from groups file
-    - [x] destroy instances from groups file
-- reporting
-    - [x] create textual output for group (SSH command)
-- groups files
-    - [ ] assign tags to user to be used as labels
-- packaging
-    - [x] deploy using setuptools
