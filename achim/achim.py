@@ -127,13 +127,21 @@ def destroy_instance(ctx, name, sure, destroy_permanent):
     is_flag=True,
     default=False,
 )
+@click.option(
+    "--permanent-only",
+    help="only create an instance for users with the flag permanent set to true",
+    is_flag=True,
+    default=False,
+)
 @click.pass_context
-def create_group(ctx, file, keyname, context, autostart, ignore_existing):
+def create_group(ctx, file, keyname, context, autostart, ignore_existing, permanent_only):
     exo = ctx.obj["exo"]
     existing = exo.get_instances()
     group = yaml.load(file.read(), Loader=yaml.SafeLoader)
     group_name = group["name"]
     users = group["users"]
+    if permanent_only:
+        users = list(filter(lambda u: u.get("permanent", False), users))
     host_names = {to_host_name(u["name"]) for u in users}
     existing_names = {e["name"] for e in existing}
     already_used = host_names.intersection(existing_names)
