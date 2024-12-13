@@ -1,13 +1,13 @@
 name: students
 users:
-  - email: foo_bar@acme.org
-    name: foo_bar
-    ssh-key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJhx+5Z/Ao+9w3EujyXcKcE8Wzw0uyApawro5dlMXQwa patrick.bucher@sluz.ch"
-    purpose: exercises
-  - email: qux_baz@acme.org
-    name: qux_baz
-    ssh-key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJhx+5Z/Ao+9w3EujyXcKcE8Wzw0uyApawro5dlMXQwa patrick.bucher@sluz.ch"
-    purpose: exam
-  - email: ding_dong@acme.org
-    name: ding_dong
-    ssh-key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJhx+5Z/Ao+9w3EujyXcKcE8Wzw0uyApawro5dlMXQwa patrick.bucher@sluz.ch"
+  - email: alice_bobson@frickelbude.ch
+    name: alice_bobson
+    ssh-key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJhx+5Z/Ao+9w3EujyXcKcE8Wzw0uyApawro5dlMXQwa alice_bobson@frickelbude.ch"
+    permanent: true
+  - email: bob_allison@frickelbude.ch
+    name: bob_allison
+    ssh-key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJhx+5Z/Ao+9w3EujyXcKcE8Wzw0uyApawro5dlMXQwa bob_allison@frickelbude.ch"
+    permanent: false
+  - email: mallory_malfeasance@frickelbude.ch
+    name: mallory_malfeasance
+    ssh-key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJhx+5Z/Ao+9w3EujyXcKcE8Wzw0uyApawro5dlMXQwa mallory_malfeasance@frickelbude.ch"
