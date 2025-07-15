@@ -1,3 +1,4 @@
 - [ ] do not allow for group names with spaces
     - e.g. convert "Linux Essentials" to "linux-essentials"
 - [ ] define password in groups file
+    - otherwise it's getting overwritten by a random/none password?
