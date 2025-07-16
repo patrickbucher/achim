@@ -134,11 +134,13 @@ def destroy_instance(ctx, name, sure, destroy_permanent):
     default=False,
 )
 @click.pass_context
-def create_group(ctx, file, keyname, context, autostart, ignore_existing, permanent_only):
+def create_group(
+    ctx, file, keyname, context, autostart, ignore_existing, permanent_only
+):
     exo = ctx.obj["exo"]
     existing = exo.get_instances()
     group = yaml.load(file.read(), Loader=yaml.SafeLoader)
-    group_name = group["name"]
+    group_name = sanitize_name(group["name"])
     users = group["users"]
     if permanent_only:
         users = list(filter(lambda u: u.get("permanent", False), users))
@@ -349,3 +351,7 @@ def overview(ctx, key, value, file):
 
 def to_host_name(name):
     return name.replace(".", "-").replace("_", "-")
+
+
+def sanitize_name(name):
+    return name.lower().replace(" ", "-")
