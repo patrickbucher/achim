@@ -38,12 +38,7 @@ def cli(ctx):
 @click.option("--contains", help="filter image name (case insentitive)", default="")
 @click.pass_context
 def list_images(ctx, contains):
-    exo = ctx.obj["exo"]
-    templates = exo.list_templates()
-    names = sorted(map(lambda t: t["name"], templates))
-    if contains:
-        names = filter(lambda n: contains.strip().lower() in n.lower(), names)
-    for name in names:
+    for name in get_image_names(ctx, contains):
         print(name)
 
 
@@ -57,9 +52,17 @@ def list_images(ctx, contains):
 @click.option(
     "--permanent", help="require flag to destroy", is_flag=True, default=False
 )
+@click.option("--image", help="image name", default=list(templates.values())[0])
 @click.pass_context
-def create_instance(ctx, name, keyname, context, group, owner, autostart, permanent):
+def create_instance(
+    ctx, name, keyname, context, group, owner, autostart, permanent, image
+):
     exo = ctx.obj["exo"]
+    available_images = get_image_names(ctx)
+    # TODO: actually use this image!
+    if image not in available_images:
+        print(f"no such image '{image}, use list-images to see available images")
+        sys.exit(1)
     existing = exo.get_instances()
     if any([instance["name"] == name for instance in existing]):
         print(f"name '{name}' is already in use", file=sys.stderr)
@@ -360,6 +363,15 @@ def overview(ctx, key, value, file):
     else:
         condition = ""
     file.write(template.render(condition=condition, instances=output))
+
+
+def get_image_names(ctx, contains=""):
+    exo = ctx.obj["exo"]
+    templates = exo.list_templates()
+    names = sorted(map(lambda t: t["name"], templates))
+    if contains:
+        names = filter(lambda n: contains.strip().lower() in n.lower(), names)
+    return list(names)
 
 
 def to_host_name(name):
