@@ -10,6 +10,9 @@ class Exoscale:
         url_prefix = f"api-{config['EXOSCALE_ZONE']}"
         self.base_url = f"https://{url_prefix}.exoscale.com/v2"
 
+    def list_templates(self):
+        return self.get("template").json()["templates"]
+
     def get_template_by_name(self, name):
         templates = self.get("template").json()["templates"]
         matches = filter(lambda t: t["name"] == name, templates)
@@ -27,7 +30,7 @@ class Exoscale:
         return list(filtered_types)
 
     def get_instances(self):
-        return self.get(f"instance").json()["instances"]
+        return self.get("instance").json()["instances"]
 
     def start_instance(self, id):
         return self.put(f"instance/{id}:start").json()

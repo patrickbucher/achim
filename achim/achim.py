@@ -34,6 +34,19 @@ def cli(ctx):
     ctx.obj["exo"] = Exoscale(config)
 
 
+@cli.command(help="List Images")
+@click.option("--contains", help="filter image name (case insentitive)", default="")
+@click.pass_context
+def list_images(ctx, contains):
+    exo = ctx.obj["exo"]
+    templates = exo.list_templates()
+    names = sorted(map(lambda t: t["name"], templates))
+    if contains:
+        names = filter(lambda n: contains.strip().lower() in n.lower(), names)
+    for name in names:
+        print(name)
+
+
 @cli.command(help="Create a Compute Instance")
 @click.option("--name", required=True, help="instance name (hostname)")
 @click.option("--keyname", required=True, help="name of registered SSH key")
