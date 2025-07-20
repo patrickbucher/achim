@@ -62,6 +62,15 @@ class Exoscale:
         }
         return self.post("instance", payload).json()
 
+    def create_network(self, name, description="", labels={}):
+        payload = {
+            "name": name,
+            "description": description,
+            "labels": labels,
+        }
+        payload = {k: v for k, v in payload.items() if v}
+        return self.post("private-network", payload).json()
+
     def suffix_url(self, suffix):
         return f"{self.base_url}/{suffix}"
 

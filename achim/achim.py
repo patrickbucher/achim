@@ -358,6 +358,17 @@ def list_instance_types(ctx, family):
         print(instance_type)
 
 
+@cli.command(help="Create a Private Network")
+@click.option("--name", help="Network Name", required=True)
+@click.option("--description", help="Network Description")
+@click.pass_context
+def create_network(ctx, name, description):
+    must_be_valid_name(name)
+    exo = ctx.obj["exo"]
+    result = exo.create_network(name, description)
+    print(result)
+
+
 def do_create_instance(
     exo,
     name,
@@ -409,6 +420,11 @@ def must_be_valid_size(size):
 def must_be_valid_image(ctx, image):
     if not is_available_image(ctx, image):
         fatal(f"no such image '{image}, use list-images to see available images")
+
+
+def must_be_valid_name(name):
+    if not sanitize_name(name):
+        fatal(f"{name} is not a valid name")
 
 
 def is_available_image(ctx, name):
