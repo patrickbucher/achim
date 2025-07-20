@@ -8,12 +8,12 @@ import requests
 import yaml
 
 
-templates = {"debian12": "Linux Debian 12 (Bookworm) 64-bit"}
+sizes = ["micro", "tiny", "small", "medium", "large", "extra-large"]
 instance_type_filter = {
     "authorized": True,
     "family": "standard",
-    "cpus": 1,
 }
+default_image = "Linux Debian 12 (Bookworm) 64-bit"
 default_user_name = "user"
 
 
@@ -27,8 +27,7 @@ def cli(ctx):
         "EXOSCALE_ZONE",
     ]
     if any(filter(lambda k: k not in config, keys)):
-        print("missing settings in .env file (see sample.env)", file=sys.stderr)
-        sys.exit(1)
+        fatal("missing settings in .env file (see sample.env)")
 
     ctx.ensure_object(dict)
     ctx.obj["exo"] = Exoscale(config)
@@ -49,36 +48,40 @@ def list_images(ctx, contains):
 @click.option("--group", help="group (label)", default="default")
 @click.option("--owner", help="owner (label)", default="default")
 @click.option("--autostart", help="automatically start VM", is_flag=True, default=False)
-@click.option(
-    "--permanent", help="require flag to destroy", is_flag=True, default=False
-)
-@click.option("--image", help="image name", default=list(templates.values())[0])
+@click.option("--permanent", help="permanent instance", is_flag=True, default=False)
+@click.option("--image", help="image name", default=default_image)
+@click.option("--size", help="instance size", default="micro")
 @click.pass_context
 def create_instance(
-    ctx, name, keyname, context, group, owner, autostart, permanent, image
+    ctx, name, keyname, context, group, owner, autostart, permanent, image, size
 ):
+    must_be_valid_image(ctx, image)
+    must_be_valid_size(size)
     exo = ctx.obj["exo"]
-    available_images = get_image_names(ctx)
-    # TODO: actually use this image!
-    if image not in available_images:
-        print(f"no such image '{image}, use list-images to see available images")
-        sys.exit(1)
     existing = exo.get_instances()
     if any([instance["name"] == name for instance in existing]):
-        print(f"name '{name}' is already in use", file=sys.stderr)
-        sys.exit(1)
+        fatal(f"name '{name}' is already in use")
     instance = do_create_instance(
-        exo, name, keyname, context, group, owner, autostart, permanent
+        exo, name, keyname, context, group, owner, autostart, permanent, image, size
     )
     print(instance)
 
 
 def do_create_instance(
-    exo, name, keyname, context="", group="", owner="", autostart=False, permanent=False
+    exo,
+    name,
+    keyname,
+    context="",
+    group="",
+    owner="",
+    autostart=False,
+    permanent=False,
+    image="",
+    size="",
 ):
-    template = exo.get_template_by_name(templates["debian12"])
+    template = exo.get_template_by_name(image)
     instance_types = exo.get_instance_types(instance_type_filter)
-    smallest = sorted(instance_types, key=lambda it: it["memory"])[0]
+    smallest = list(filter(lambda it: it["size"] == size, instance_types))[0]
     ssh_key = exo.get_ssh_key(keyname)
     labels = {
         "context": context,
@@ -137,6 +140,8 @@ def destroy_instance(ctx, name, sure, destroy_permanent):
 @click.option("--context", help="context (label)", default="default")
 @click.option("--keyname", required=True, help="name of registered SSH key")
 @click.option("--autostart", help="automatically start VM", is_flag=True, default=False)
+@click.option("--image", help="image name", default=default_image)
+@click.option("--size", help="instance size", default="micro")
 @click.option(
     "--ignore-existing",
     help="create group even if vms from it already exists",
@@ -151,8 +156,10 @@ def destroy_instance(ctx, name, sure, destroy_permanent):
 )
 @click.pass_context
 def create_group(
-    ctx, file, keyname, context, autostart, ignore_existing, permanent_only
+    ctx, file, keyname, context, autostart, image, size, ignore_existing, permanent_only
 ):
+    must_be_valid_image(ctx, image)
+    must_be_valid_size(size)
     exo = ctx.obj["exo"]
     existing = exo.get_instances()
     group = yaml.load(file.read(), Loader=yaml.SafeLoader)
@@ -164,8 +171,7 @@ def create_group(
     existing_names = {e["name"] for e in existing}
     already_used = host_names.intersection(existing_names)
     if already_used and not ignore_existing:
-        print(f"names '{already_used}' are already in use", file=sys.stderr)
-        sys.exit(1)
+        fatal(f"names '{already_used}' are already in use")
     instances = []
     for user in users:
         host_name = to_host_name(user["name"])
@@ -332,7 +338,7 @@ def user_playbook(group_file, playbook):
     yaml.dump(content, playbook)
 
 
-@cli.command(help="Generate  Filtered HTML Overview Page for Instance Access Details")
+@cli.command(help="Generate Filtered HTML Overview Page for Instance Access Details")
 @click.option("--key", help="filter by label key (e.g. context, group)")
 @click.option("--value", help="filter by label value")
 @click.option("--file", type=click.File("w", encoding="utf-8"), help="HTML output file")
@@ -343,8 +349,7 @@ def overview(ctx, key, value, file):
     if key and value:
         instances = [i for i in instances if i["labels"].get(key, "") == value]
     if not instances:
-        print(f"no instances matched label filter {key}={value}", file=sys.stderr)
-        sys.exit(1)
+        fatal(f"no instances matched label filter {key}={value}")
     output = []
     for instance in sorted(instances, key=lambda i: i["name"]):
         ip = instance["public-ip"]
@@ -365,6 +370,20 @@ def overview(ctx, key, value, file):
     file.write(template.render(condition=condition, instances=output))
 
 
+@cli.command(help="List Instance Types")
+@click.option("--family", help="Instance Family", default="standard")
+@click.pass_context
+def list_instance_types(ctx, family):
+    exo = ctx.obj["exo"]
+    filter_rules = {
+        "authorized": True,
+        "family": family,
+    }
+    instance_types = exo.get_instance_types(filter_rules)
+    for instance_type in instance_types:
+        print(instance_type)
+
+
 def get_image_names(ctx, contains=""):
     exo = ctx.obj["exo"]
     templates = exo.list_templates()
@@ -380,3 +399,26 @@ def to_host_name(name):
 
 def sanitize_name(name):
     return name.lower().replace(" ", "-")
+
+
+def must_be_valid_size(size):
+    if not size in sizes:
+        fatal(f"no such size '{size}', use one of {sizes}")
+
+
+def must_be_valid_image(ctx, image):
+    if not is_available_image(ctx, image):
+        fatal(f"no such image '{image}, use list-images to see available images")
+
+
+def is_available_image(ctx, name):
+    return name in get_image_names(ctx)
+
+
+def eprint(message):
+    print(message, file=sys.stderr)
+
+
+def fatal(message):
+    print(message, file=sys.stderr)
+    sys.exit(1)
