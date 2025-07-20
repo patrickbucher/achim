@@ -62,17 +62,35 @@ class Exoscale:
         }
         return self.post("instance", payload).json()
 
-    def create_network(self, name, description="", labels={}):
+    def create_network(
+        self, name, start_ip, end_ip, netmask, description="", labels={}
+    ):
         payload = {
             "name": name,
+            "start-ip": start_ip,
+            "end-ip": end_ip,
+            "netmask": netmask,
             "description": description,
             "labels": labels,
         }
         payload = {k: v for k, v in payload.items() if v}
         return self.post("private-network", payload).json()
 
-    def list_networks(self):
+    def get_networks(self):
         return self.get("private-network").json()["private-networks"]
+
+    def attach_network(self, network, instance, ip):
+        payload = {
+            "ip": ip,
+            "instance": {
+                "id": instance,
+            },
+        }
+        payload = {k: v for k, v in payload.items() if v}
+        return self.put(f"private-network/{network}:attach", payload).json()
+
+    def delete_network(self, network):
+        return self.delete(f"private-network/{network}").json()
 
     def suffix_url(self, suffix):
         return f"{self.base_url}/{suffix}"

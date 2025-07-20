@@ -7,6 +7,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 import requests
 import yaml
 
+from achim.utils import is_valid_ipv4
 
 sizes = ["micro", "tiny", "small", "medium", "large", "extra-large"]
 instance_type_filter = {
@@ -361,11 +362,17 @@ def list_instance_types(ctx, family):
 @cli.command(help="Create a Private Network")
 @click.option("--name", help="Network Name", required=True)
 @click.option("--description", help="Network Description")
+@click.option("--start-ip", help="Start of IP Range", default="10.0.0.1")
+@click.option("--end-ip", help="End of IP Range", default="10.0.0.150")
+@click.option("--netmask", help="Subnet Mask", default="255.255.255.0")
 @click.pass_context
-def create_network(ctx, name, description):
+def create_network(ctx, name, description, start_ip, end_ip, netmask):
     must_be_valid_name(name)
+    must_be_valid_ipv4(start_ip)
+    must_be_valid_ipv4(end_ip)
+    must_be_valid_ipv4(netmask)
     exo = ctx.obj["exo"]
-    result = exo.create_network(name, description)
+    result = exo.create_network(name, start_ip, end_ip, netmask, description)
     print(result)
 
 
@@ -381,11 +388,35 @@ def list_networks(ctx, contains):
 @cli.command(help="Attach a Private Network to an Instance")
 @click.option("--network", help="Name of the Network", required=True)
 @click.option("--instance", help="Name of the Instance", required=True)
+@click.option("--ip", help="Attach with static IP Address")
 @click.pass_context
-def attach_network(ctx, network, instance):
-    must_be_valid_image(network)
-    must_be_valid_image(instance)
-    # TODO: implement
+def attach_network(ctx, network, instance, ip):
+    must_be_valid_name(network)
+    must_be_valid_name(instance)
+    if ip:
+        must_be_valid_ipv4(ip)
+    exo = ctx.obj["exo"]
+    instances = list(filter(lambda i: i["name"] == instance, exo.get_instances()))
+    networks = list(filter(lambda n: n["name"] == network, exo.get_networks()))
+    if len(networks) != 1:
+        fatal(f"network '{network}' not found or not unique")
+    if len(instances) != 1:
+        fatal(f"instance '{instance}' not found or not unique")
+    network_id = networks[0]["id"]
+    instance_id = instances[0]["id"]
+    print(exo.attach_network(network_id, instance_id, ip))
+
+
+@cli.command(help="Destroy a Private Network")
+@click.option("--name", help="Name of the Network", required=True)
+@click.pass_context
+def destroy_network(ctx, name):
+    must_be_valid_name(name)
+    exo = ctx.obj["exo"]
+    networks = list(filter(lambda n: n["name"] == name, exo.get_networks()))
+    if len(networks) != 1:
+        fatal(f"network '{name}' not found or not unique")
+    print(exo.delete_network(networks[0]["id"]))
 
 
 def do_create_instance(
@@ -425,7 +456,7 @@ def get_image_names(ctx, contains=""):
 
 def get_networks(ctx, contains=""):
     exo = ctx.obj["exo"]
-    nets = exo.list_networks()
+    nets = exo.get_networks()
     if contains:
         nets = filter(lambda n: contains.strip().lower() in n["name"].lower(), nets)
     return list(nets)
@@ -452,6 +483,11 @@ def must_be_valid_image(ctx, image):
 def must_be_valid_name(name):
     if not sanitize_name(name):
         fatal(f"{name} is not a valid name")
+
+
+def must_be_valid_ipv4(ip):
+    if not is_valid_ipv4(ip):
+        fatal(f"{ip} is not a valid IPv4 address")
 
 
 def is_available_image(ctx, name):
