@@ -369,6 +369,25 @@ def create_network(ctx, name, description):
     print(result)
 
 
+@cli.command(help="List Private Networks")
+@click.option("--contains", help="filter network name (case insentitive)", default="")
+@click.pass_context
+def list_networks(ctx, contains):
+    networks = get_networks(ctx, contains)
+    for network in networks:
+        print(network)
+
+
+@cli.command(help="Attach a Private Network to an Instance")
+@click.option("--network", help="Name of the Network", required=True)
+@click.option("--instance", help="Name of the Instance", required=True)
+@click.pass_context
+def attach_network(ctx, network, instance):
+    must_be_valid_image(network)
+    must_be_valid_image(instance)
+    # TODO: implement
+
+
 def do_create_instance(
     exo,
     name,
@@ -402,6 +421,14 @@ def get_image_names(ctx, contains=""):
     if contains:
         names = filter(lambda n: contains.strip().lower() in n.lower(), names)
     return list(names)
+
+
+def get_networks(ctx, contains=""):
+    exo = ctx.obj["exo"]
+    nets = exo.list_networks()
+    if contains:
+        nets = filter(lambda n: contains.strip().lower() in n["name"].lower(), nets)
+    return list(nets)
 
 
 def to_host_name(name):
