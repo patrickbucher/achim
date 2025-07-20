@@ -1,11 +1,14 @@
 - name: "Modul 987 Lab Exercise"
 - instances:
     - name: firewall
-      image: "VuOS 1.4.3"
+      image: VuOS 1.4.3
+      size: micro
     - name: server
-      image: "Windows Server 2025"
+      image: Windows Server 2025
+      size: small
     - name: client
-      image: "Windows 11"
+      image: Windows Server 2022
+      size: small
 - networks:
     - name: dmz
       connects:
@@ -15,7 +18,3 @@
       connects:
         - client
         - firewall
-
-# TODO:
-# - new primitives: list images, create network, add network to instance, pick image for instance
-# - new commands: create-scenario (capable of processing this kind of YAML with additional groups file)

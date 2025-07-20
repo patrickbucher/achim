@@ -67,32 +67,6 @@ def create_instance(
     print(instance)
 
 
-def do_create_instance(
-    exo,
-    name,
-    keyname,
-    context="",
-    group="",
-    owner="",
-    autostart=False,
-    permanent=False,
-    image="",
-    size="",
-):
-    template = exo.get_template_by_name(image)
-    instance_types = exo.get_instance_types(instance_type_filter)
-    smallest = list(filter(lambda it: it["size"] == size, instance_types))[0]
-    ssh_key = exo.get_ssh_key(keyname)
-    labels = {
-        "context": context,
-        "group": group,
-        "owner": owner,
-        "permanent": permanent,
-    }
-    labels = {k: v for (k, v) in labels.items() if v}
-    return exo.create_instance(name, template, smallest, ssh_key, labels, autostart)
-
-
 @cli.command(help="Start a Compute Instance")
 @click.option("--name", help="instance name (hostname)")
 @click.pass_context
@@ -382,6 +356,32 @@ def list_instance_types(ctx, family):
     instance_types = exo.get_instance_types(filter_rules)
     for instance_type in instance_types:
         print(instance_type)
+
+
+def do_create_instance(
+    exo,
+    name,
+    keyname,
+    context="",
+    group="",
+    owner="",
+    autostart=False,
+    permanent=False,
+    image="",
+    size="",
+):
+    template = exo.get_template_by_name(image)
+    instance_types = exo.get_instance_types(instance_type_filter)
+    smallest = list(filter(lambda it: it["size"] == size, instance_types))[0]
+    ssh_key = exo.get_ssh_key(keyname)
+    labels = {
+        "context": context,
+        "group": group,
+        "owner": owner,
+        "permanent": permanent,
+    }
+    labels = {k: v for (k, v) in labels.items() if v}
+    return exo.create_instance(name, template, smallest, ssh_key, labels, autostart)
 
 
 def get_image_names(ctx, contains=""):
