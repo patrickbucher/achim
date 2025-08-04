@@ -1,20 +1,20 @@
-- name: "Modul 987 Lab Exercise"
-- instances:
-    - name: firewall
-      image: VuOS 1.4.3
-      size: micro
-    - name: server
-      image: Windows Server 2025
-      size: small
-    - name: client
-      image: Windows Server 2022
-      size: small
-- networks:
-    - name: dmz
-      connects:
-        - firewall
-        - server
-    - name: internet
-      connects:
-        - client
-        - firewall
+name: "Modul 987 Lab Exercise"
+instances:
+  - name: firewall
+    image: VyOS 1.4.3
+    size: micro
+  - name: server
+    image: Windows Server 2025
+    size: small
+  - name: client
+    image: Windows Server 2022
+    size: big
+networks:
+  - name: dmz
+    connects:
+      - firewall
+      - server
+  - name: internet
+    connects:
+      - client
+      - firewall

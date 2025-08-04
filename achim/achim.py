@@ -216,6 +216,40 @@ def destroy_group(ctx, name, sure, destroy_permanent):
         print(exo.destroy_instance(instance["id"]))
 
 
+@cli.command(help="Create Scenario Instances for a Group")
+@click.option(
+    "--scenario",
+    type=click.File("r", encoding="utf-8"),
+    help="scenario file to be used",
+)
+@click.option(
+    "--group", type=click.File("r", encoding="utf-8"), help="groups file to be used"
+)
+@click.option("--context", help="context (label)", default="default")
+@click.option("--keyname", required=True, help="name of registered SSH key")
+@click.option(
+    "--autostart", help="automatically start VMs", is_flag=True, default=False
+)
+# TODO: ignore existing
+# TODO: permanent only
+@click.pass_context
+def create_scenario(ctx, scenario, group, context, keyname, autostart):
+    scenario_data = yaml.load(scenario.read(), Loader=yaml.SafeLoader)
+    for field in ["name", "instances"]:
+        if field not in scenario_data:
+            fatal(f"missing required field '{field}' in scenario file")
+    instance_data = scenario_data["instances"]
+    required_images = set(map(lambda i: i["image"], instance_data))
+    available_images = set(get_image_names(ctx))
+    missing_images = required_images - available_images
+    if missing_images:
+        fatal(f"no such image(s): {missing_images}")
+    required_sizes = set(map(lambda i: i["size"], instance_data))
+    missing_sizes = required_sizes - set(sizes)
+    if missing_sizes:
+        fatal(f"no such size(s): {missing_sizes}")
+
+
 @cli.command(help="Tests an HTTP Service on the Instances of the Group")
 @click.option("--name", help="group name")
 @click.option("--suffix", help="URL suffix", default="")
