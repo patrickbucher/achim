@@ -1,24 +1,24 @@
 [build-system]
-requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+requires = ["setuptools"]
 
 [project]
-name = "achim"
-authors = [{ name = "Patrick Bucher", email = "patrick.bucher@mailbox.org" }]
-description = "Advanced Cloud Hyperscaling Infrastructure Manager"
-readme = "README.md"
-keywords = ["Cloud", "Exoscale", "Compute"]
-license = { text = "MIT" }
+authors = [{name = "Patrick Bucher", email = "patrick.bucher@mailbox.org"}]
 classifiers = ["Programming Language :: Python :: 3"]
-version = "0.0.10"
 dependencies = [
-    "click",
-    "python-dotenv",
-    "Jinja2",
-    "PyYAML",
-    "requests",
-    "requests-exoscale-auth",
+  "click",
+  "python-dotenv",
+  "Jinja2",
+  "PyYAML",
+  "requests",
+  "requests-exoscale-auth",
 ]
+description = "Advanced Cloud Hyperscaling Infrastructure Manager"
+keywords = ["Cloud", "Exoscale", "Compute"]
+license = {text = "MIT"}
+name = "achim"
+readme = "README.md"
+version = "0.0.10"
 
 [project.scripts]
 achim = "achim:cli"
