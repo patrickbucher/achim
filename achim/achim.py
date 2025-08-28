@@ -254,7 +254,7 @@ def create_scenario(ctx, scenario, group, context, keyname, autostart):
         user_name = entry["user"]["name"]
         return {
             "name": instance_name,
-            "canonical_name": f"{instance_name}_{user_name}",
+            "canonical_name": to_host_name(f"{instance_name}_{user_name}"),
             "size": entry["instance"]["size"],
             "image": entry["instance"]["image"],
         }
@@ -265,7 +265,7 @@ def create_scenario(ctx, scenario, group, context, keyname, autostart):
         connect_hosts = entry["network"]["connects"]
         return {
             "name": network_name,
-            "canonical_name": f"{network_name}_{user_name}",
+            "canonical_name": to_host_name(f"{network_name}_{user_name}"),
             "connects": [
                 instance["canonical_name"]
                 for instance_username, instances in instances_by_username.items()
@@ -316,21 +316,14 @@ def create_scenario(ctx, scenario, group, context, keyname, autostart):
         for network_data in networks
     ]
 
-    print(instances)
-    print(networks)
-    return
-    net_attachments = []
     all_networks = exo.get_networks()
-    print(all_networks)
     all_instances = exo.get_instances()
-    print(all_instances)
+    net_attachments = []
     for network_datas in networks_by_username.values():
         for network_data in network_datas:
             netname = network_data["canonical_name"]
             connects = network_data["connects"]
-            network_id = [n["id"] for n in all_networks if n["name"] == netname][
-                0
-            ]  # TODO empty list!?
+            network_id = [n["id"] for n in all_networks if n["name"] == netname][0]
             instance_ids = [i["id"] for i in all_instances if i["name"] in connects]
             network = exo.get_network(network_id)
             network_start_ip = parse_ipv4(network["start-ip"])
@@ -344,7 +337,10 @@ def create_scenario(ctx, scenario, group, context, keyname, autostart):
                 )
                 attachment = exo.attach_network(network_id, instance_id, next_ip)
                 net_attachments.append(attachment)
-    print(attachment)
+
+    print("instances", instances)
+    print("networks", networks)
+    print("attachments", net_attachments)
 
 
 @cli.command(help="Tests an HTTP Service on the Instances of the Group")
