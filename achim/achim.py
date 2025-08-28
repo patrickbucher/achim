@@ -259,10 +259,33 @@ def create_scenario(ctx, scenario, group, context, keyname, autostart):
             "image": entry["instance"]["image"],
         }
 
+    def with_canonical_netname(entry, instances_by_username):
+        network_name = entry["network"]["name"]
+        user_name = entry["user"]["name"]
+        connect_hosts = entry["network"]["connects"]
+        return {
+            "name": network_name,
+            "canonical_name": f"{network_name}_{user_name}",
+            "connects": [
+                instance["canonical_name"]
+                for instance_username, instances in instances_by_username.items()
+                for instance in instances
+                if instance["name"] in connect_hosts and instance_username == user_name
+            ],
+        }
+
     instances_by_username = {
         u["name"]: [
             with_canonical_hostname(e)
             for e in instances_needed
+            if e["user"]["name"] == u["name"]
+        ]
+        for u in user_data
+    }
+    networks_by_username = {
+        u["name"]: [
+            with_canonical_netname(e, instances_by_username)
+            for e in networks_needed
             if e["user"]["name"] == u["name"]
         ]
         for u in user_data
@@ -279,11 +302,21 @@ def create_scenario(ctx, scenario, group, context, keyname, autostart):
             permanent=False,
             image=instance_data["image"],
             size=instance_data["size"],
+            additional_labels={"scenario": scenario_data["name"]},
         )
         for username, instances in instances_by_username.items()
         for instance_data in instances
     ]
+    networks = [
+        exo.create_network(
+            to_host_name(network_data["canonical_name"]),
+            labels={"scenario": scenario_data["name"], "owner": username},
+        )
+        for username, networks in networks_by_username.items()
+        for network_data in networks
+    ]
     print(instances)
+    print(networks)
 
 
 @cli.command(help="Tests an HTTP Service on the Instances of the Group")
@@ -500,9 +533,9 @@ def do_create_instance(
     permanent=False,
     image="",
     size="",
+    additional_labels={},
 ):
     template = exo.get_template_by_name(image)
-    print(template)
     instance_types = exo.get_instance_types(instance_type_filter)
     smallest = list(filter(lambda it: it["size"] == size, instance_types))[0]
     ssh_key = exo.get_ssh_key(keyname)
@@ -511,6 +544,7 @@ def do_create_instance(
         "group": group,
         "owner": owner,
         "permanent": permanent,
+        **additional_labels,
     }
     labels = {k: v for (k, v) in labels.items() if v}
     return exo.create_instance(name, template, smallest, ssh_key, labels, autostart)

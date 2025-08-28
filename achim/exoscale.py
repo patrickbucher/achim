@@ -64,7 +64,13 @@ class Exoscale:
         return self.post("instance", payload).json()
 
     def create_network(
-        self, name, start_ip, end_ip, netmask, description="", labels={}
+        self,
+        name,
+        start_ip="10.0.0.1",
+        end_ip="10.0.0.150",
+        netmask="255.255.255.0",
+        description="",
+        labels={},
     ):
         payload = {
             "name": name,
