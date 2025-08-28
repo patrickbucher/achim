@@ -51,13 +51,14 @@ class Exoscale:
     def create_instance(
         self, name, template, instance_type, ssh_key, labels={}, autostart=False
     ):
+        bytes_to_gb = lambda b: int(b / 1024**3)
         payload = {
             "auto-start": autostart,
             "name": name,
             "instance-type": instance_type,
             "template": template,
             "ssh-key": {"name": ssh_key["name"]},
-            "disk-size": 10,
+            "disk-size": bytes_to_gb(template["size"]) if "size" in template else 10,
             "labels": labels,
         }
         return self.post("instance", payload).json()

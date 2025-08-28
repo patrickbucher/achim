@@ -14,7 +14,7 @@ instance_type_filter = {
     "authorized": True,
     "family": "standard",
 }
-default_image = "Linux Debian 12 (Bookworm) 64-bit"
+default_image = "Linux Debian 13 (Trixie) 64-bit"
 default_user_name = "user"
 
 
@@ -235,19 +235,55 @@ def destroy_group(ctx, name, sure, destroy_permanent):
 @click.pass_context
 def create_scenario(ctx, scenario, group, context, keyname, autostart):
     scenario_data = yaml.load(scenario.read(), Loader=yaml.SafeLoader)
-    for field in ["name", "instances"]:
-        if field not in scenario_data:
-            fatal(f"missing required field '{field}' in scenario file")
+    group_data = yaml.load(group.read(), Loader=yaml.SafeLoader)
+    exo = ctx.obj["exo"]
+    validate_scenario(ctx, scenario_data)
     instance_data = scenario_data["instances"]
-    required_images = set(map(lambda i: i["image"], instance_data))
-    available_images = set(get_image_names(ctx))
-    missing_images = required_images - available_images
-    if missing_images:
-        fatal(f"no such image(s): {missing_images}")
-    required_sizes = set(map(lambda i: i["size"], instance_data))
-    missing_sizes = required_sizes - set(sizes)
-    if missing_sizes:
-        fatal(f"no such size(s): {missing_sizes}")
+    network_data = scenario_data["networks"]
+    group_name = sanitize_name(group_data["name"])
+    user_data = group_data["users"]
+    instances_needed = [
+        {"instance": i, "user": u} for i in instance_data for u in user_data
+    ]
+    networks_needed = [
+        {"network": n, "user": u} for n in network_data for u in user_data
+    ]
+
+    def with_canonical_hostname(entry):
+        instance_name = entry["instance"]["name"]
+        user_name = entry["user"]["name"]
+        return {
+            "name": instance_name,
+            "canonical_name": f"{instance_name}_{user_name}",
+            "size": entry["instance"]["size"],
+            "image": entry["instance"]["image"],
+        }
+
+    instances_by_username = {
+        u["name"]: [
+            with_canonical_hostname(e)
+            for e in instances_needed
+            if e["user"]["name"] == u["name"]
+        ]
+        for u in user_data
+    }
+    instances = [
+        do_create_instance(
+            exo,
+            to_host_name(instance_data["canonical_name"]),
+            keyname,
+            context,
+            group_name,
+            username,
+            autostart,
+            permanent=False,
+            image=instance_data["image"],
+            size=instance_data["size"],
+        )
+        for username, instances in instances_by_username.items()
+        for instance_data in instances
+    ]
+    print(instances)
 
 
 @cli.command(help="Tests an HTTP Service on the Instances of the Group")
@@ -466,6 +502,7 @@ def do_create_instance(
     size="",
 ):
     template = exo.get_template_by_name(image)
+    print(template)
     instance_types = exo.get_instance_types(instance_type_filter)
     smallest = list(filter(lambda it: it["size"] == size, instance_types))[0]
     ssh_key = exo.get_ssh_key(keyname)
@@ -494,6 +531,22 @@ def get_networks(ctx, contains=""):
     if contains:
         nets = filter(lambda n: contains.strip().lower() in n["name"].lower(), nets)
     return list(nets)
+
+
+def validate_scenario(ctx, scenario_data):
+    for field in ["name", "instances"]:
+        if field not in scenario_data:
+            fatal(f"missing required field '{field}' in scenario file")
+    instance_data = scenario_data["instances"]
+    required_images = set(map(lambda i: i["image"], instance_data))
+    available_images = set(get_image_names(ctx))
+    missing_images = required_images - available_images
+    if missing_images:
+        fatal(f"no such image(s): {missing_images}")
+    required_sizes = set(map(lambda i: i["size"], instance_data))
+    missing_sizes = required_sizes - set(sizes)
+    if missing_sizes:
+        fatal(f"no such size(s): {missing_sizes}")
 
 
 def to_host_name(name):

@@ -5,10 +5,10 @@ instances:
     size: micro
   - name: server
     image: Windows Server 2025
-    size: small
+    size: medium
   - name: client
     image: Windows Server 2022
-    size: big
+    size: medium
 networks:
   - name: dmz
     connects:
