@@ -98,6 +98,9 @@ class Exoscale:
 
     def delete_network(self, network):
         return self.delete(f"private-network/{network}").json()
+    
+    def get_network(self, id):
+        return self.get(f"private-network/{id}").json()
 
     def suffix_url(self, suffix):
         return f"{self.base_url}/{suffix}"

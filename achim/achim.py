@@ -7,7 +7,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 import requests
 import yaml
 
-from achim.utils import is_valid_ipv4
+from achim.utils import is_valid_ipv4, parse_ipv4
 
 sizes = ["micro", "tiny", "small", "medium", "large", "extra-large"]
 instance_type_filter = {
@@ -315,8 +315,36 @@ def create_scenario(ctx, scenario, group, context, keyname, autostart):
         for username, networks in networks_by_username.items()
         for network_data in networks
     ]
+
     print(instances)
     print(networks)
+    return
+    net_attachments = []
+    all_networks = exo.get_networks()
+    print(all_networks)
+    all_instances = exo.get_instances()
+    print(all_instances)
+    for network_datas in networks_by_username.values():
+        for network_data in network_datas:
+            netname = network_data["canonical_name"]
+            connects = network_data["connects"]
+            network_id = [n["id"] for n in all_networks if n["name"] == netname][
+                0
+            ]  # TODO empty list!?
+            instance_ids = [i["id"] for i in all_instances if i["name"] in connects]
+            network = exo.get_network(network_id)
+            network_start_ip = parse_ipv4(network["start-ip"])
+            for offset, instance_id in enumerate(instance_ids):
+                next_ip = ".".join(
+                    str(s)
+                    for s in [
+                        s if i < 3 else s + offset
+                        for i, s in enumerate(network_start_ip)
+                    ]
+                )
+                attachment = exo.attach_network(network_id, instance_id, next_ip)
+                net_attachments.append(attachment)
+    print(attachment)
 
 
 @cli.command(help="Tests an HTTP Service on the Instances of the Group")
@@ -520,6 +548,17 @@ def destroy_network(ctx, name):
     if len(networks) != 1:
         fatal(f"network '{name}' not found or not unique")
     print(exo.delete_network(networks[0]["id"]))
+
+
+@cli.command(help="Destroy all Private Networks")
+@click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
+@click.pass_context
+def destroy_all_networks(ctx, sure):
+    if not sure:
+        return
+    exo = ctx.obj["exo"]
+    for network in exo.get_networks():
+        print(exo.delete_network(network["id"]))
 
 
 def do_create_instance(
