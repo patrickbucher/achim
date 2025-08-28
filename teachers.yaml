@@ -1,10 +1,11 @@
 name: BBZW Teachers
 users:
   - email: patrick.bucher@sluz.ch
-    name: patrick_bucher
+    name: alice_bobson
     ssh-key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJhx+5Z/Ao+9w3EujyXcKcE8Wzw0uyApawro5dlMXQwa patrick.bucher@sluz.ch"
-    permanent: true
-    password: topsecret
   - email: patrick.bucher87@gmail.com
-    name: jan_schlendri
+    name: bob_allison
+    ssh-key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJhx+5Z/Ao+9w3EujyXcKcE8Wzw0uyApawro5dlMXQwa patrick.bucher@sluz.ch"
+  - email: patrick.bucher@composed.ch
+    name: mallory_malfeasence
     ssh-key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJhx+5Z/Ao+9w3EujyXcKcE8Wzw0uyApawro5dlMXQwa patrick.bucher@sluz.ch"

@@ -86,15 +86,15 @@ class Exoscale:
     def get_networks(self):
         return self.get("private-network").json()["private-networks"]
 
-    def attach_network(self, network, instance, ip):
+    def attach_network(self, network_id, instance_id, ip):
         payload = {
             "ip": ip,
             "instance": {
-                "id": instance,
+                "id": instance_id,
             },
         }
         payload = {k: v for k, v in payload.items() if v}
-        return self.put(f"private-network/{network}:attach", payload).json()
+        return self.put(f"private-network/{network_id}:attach", payload).json()
 
     def delete_network(self, network):
         return self.delete(f"private-network/{network}").json()

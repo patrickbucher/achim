@@ -1,4 +1,5 @@
 import sys
+from functools import reduce
 
 import click
 from dotenv import dotenv_values
@@ -7,7 +8,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 import requests
 import yaml
 
-from achim.utils import is_valid_ipv4, parse_ipv4
+from achim.utils import is_valid_ipv4, parse_ipv4, increment_ip
 
 sizes = ["micro", "tiny", "small", "medium", "large", "extra-large"]
 instance_type_filter = {
@@ -230,8 +231,8 @@ def destroy_group(ctx, name, sure, destroy_permanent):
 @click.option(
     "--autostart", help="automatically start VMs", is_flag=True, default=False
 )
-# TODO: ignore existing
-# TODO: permanent only
+# TODO: ignore existing!
+# TODO: permanent only?
 @click.pass_context
 def create_scenario(ctx, scenario, group, context, keyname, autostart):
     scenario_data = yaml.load(scenario.read(), Loader=yaml.SafeLoader)
@@ -242,54 +243,10 @@ def create_scenario(ctx, scenario, group, context, keyname, autostart):
     network_data = scenario_data["networks"]
     group_name = sanitize_name(group_data["name"])
     user_data = group_data["users"]
-    instances_needed = [
-        {"instance": i, "user": u} for i in instance_data for u in user_data
-    ]
-    networks_needed = [
-        {"network": n, "user": u} for n in network_data for u in user_data
-    ]
-
-    def with_canonical_hostname(entry):
-        instance_name = entry["instance"]["name"]
-        user_name = entry["user"]["name"]
-        return {
-            "name": instance_name,
-            "canonical_name": to_host_name(f"{instance_name}_{user_name}"),
-            "size": entry["instance"]["size"],
-            "image": entry["instance"]["image"],
-        }
-
-    def with_canonical_netname(entry, instances_by_username):
-        network_name = entry["network"]["name"]
-        user_name = entry["user"]["name"]
-        connect_hosts = entry["network"]["connects"]
-        return {
-            "name": network_name,
-            "canonical_name": to_host_name(f"{network_name}_{user_name}"),
-            "connects": [
-                instance["canonical_name"]
-                for instance_username, instances in instances_by_username.items()
-                for instance in instances
-                if instance["name"] in connect_hosts and instance_username == user_name
-            ],
-        }
-
-    instances_by_username = {
-        u["name"]: [
-            with_canonical_hostname(e)
-            for e in instances_needed
-            if e["user"]["name"] == u["name"]
-        ]
-        for u in user_data
-    }
-    networks_by_username = {
-        u["name"]: [
-            with_canonical_netname(e, instances_by_username)
-            for e in networks_needed
-            if e["user"]["name"] == u["name"]
-        ]
-        for u in user_data
-    }
+    instances_by_username = determine_instances(instance_data, user_data)
+    networks_by_username = determine_networks(
+        network_data, user_data, instances_by_username
+    )
     instances = [
         do_create_instance(
             exo,
@@ -315,32 +272,37 @@ def create_scenario(ctx, scenario, group, context, keyname, autostart):
         for username, networks in networks_by_username.items()
         for network_data in networks
     ]
+    attachments = [
+        exo.attach_network(a["network_id"], a["instance_id"], a["ip"])
+        for a in determine_attachments(exo, networks_by_username)
+    ]
+    print(instances)
+    print(networks)
+    print(attachments)
 
-    all_networks = exo.get_networks()
-    all_instances = exo.get_instances()
-    net_attachments = []
-    for network_datas in networks_by_username.values():
-        for network_data in network_datas:
-            netname = network_data["canonical_name"]
-            connects = network_data["connects"]
-            network_id = [n["id"] for n in all_networks if n["name"] == netname][0]
-            instance_ids = [i["id"] for i in all_instances if i["name"] in connects]
-            network = exo.get_network(network_id)
-            network_start_ip = parse_ipv4(network["start-ip"])
-            for offset, instance_id in enumerate(instance_ids):
-                next_ip = ".".join(
-                    str(s)
-                    for s in [
-                        s if i < 3 else s + offset
-                        for i, s in enumerate(network_start_ip)
-                    ]
-                )
-                attachment = exo.attach_network(network_id, instance_id, next_ip)
-                net_attachments.append(attachment)
 
-    print("instances", instances)
-    print("networks", networks)
-    print("attachments", net_attachments)
+@cli.command(help="Destroy Scenario Instances and Networks by Scenario Name")
+@click.option("--name", help="scenario name (see scenario file)")
+@click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
+@click.pass_context
+def destroy_scenario(ctx, name, sure):
+    if not sure:
+        return
+    exo = ctx.obj["exo"]
+
+    def has_scenario(o):
+        return o["labels"].get("scenario", "") == name
+
+    instances = [
+        exo.destroy_instance(instance["id"])
+        for instance in filter(has_scenario, exo.get_instances())
+    ]
+    networks = [
+        exo.delete_network(network["id"])
+        for network in filter(has_scenario, exo.get_networks())
+    ]
+    print(instances)
+    print(networks)
 
 
 @cli.command(help="Tests an HTTP Service on the Instances of the Group")
@@ -616,6 +578,79 @@ def validate_scenario(ctx, scenario_data):
     missing_sizes = required_sizes - set(sizes)
     if missing_sizes:
         fatal(f"no such size(s): {missing_sizes}")
+
+
+def determine_instances(instance_data, user_data):
+    def with_canonical_hostname(entry):
+        instance_name = entry["instance"]["name"]
+        user_name = entry["user"]["name"]
+        return {
+            "name": instance_name,
+            "canonical_name": to_host_name(f"{instance_name}_{user_name}"),
+            "size": entry["instance"]["size"],
+            "image": entry["instance"]["image"],
+        }
+
+    instances_needed = [
+        {"instance": i, "user": u} for i in instance_data for u in user_data
+    ]
+    return {
+        u["name"]: [
+            with_canonical_hostname(e)
+            for e in instances_needed
+            if e["user"]["name"] == u["name"]
+        ]
+        for u in user_data
+    }
+
+
+def determine_networks(network_data, user_data, instances_by_username):
+    def with_canonical_netname(entry, instances_by_username):
+        network_name = entry["network"]["name"]
+        user_name = entry["user"]["name"]
+        connect_hosts = entry["network"]["connects"]
+        return {
+            "name": network_name,
+            "canonical_name": to_host_name(f"{network_name}_{user_name}"),
+            "connects": [
+                instance["canonical_name"]
+                for instance_username, instances in instances_by_username.items()
+                for instance in instances
+                if instance["name"] in connect_hosts and instance_username == user_name
+            ],
+        }
+
+    networks_needed = [
+        {"network": n, "user": u} for n in network_data for u in user_data
+    ]
+    return {
+        u["name"]: [
+            with_canonical_netname(e, instances_by_username)
+            for e in networks_needed
+            if e["user"]["name"] == u["name"]
+        ]
+        for u in user_data
+    }
+
+
+def determine_attachments(exo, networks_by_username):
+    networks = exo.get_networks()
+    instances = exo.get_instances()
+    all_networks = reduce(lambda acc, e: acc + e, networks_by_username.values())
+    attachments = []
+    for network_data in all_networks:
+        name = network_data["canonical_name"]
+        connects = network_data["connects"]
+        network = next(filter(lambda n: n["name"] == name, networks))
+        network_id = network["id"]
+        current_ip = network["start-ip"]
+        for connect in connects:
+            instance_id = next(filter(lambda i: i["name"] == connect, instances))["id"]
+            current_ip = increment_ip(current_ip)
+            attachments.append(
+                {"network_id": network_id, "instance_id": instance_id, "ip": current_ip}
+            )
+    return attachments
 
 
 def to_host_name(name):
