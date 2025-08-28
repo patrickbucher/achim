@@ -10,7 +10,7 @@ readme = "README.md"
 keywords = ["Cloud", "Exoscale", "Compute"]
 license = { text = "MIT" }
 classifiers = ["Programming Language :: Python :: 3"]
-version = "0.0.9"
+version = "0.0.10"
 dependencies = [
     "click",
     "python-dotenv",
