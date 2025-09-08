@@ -1,0 +1,30 @@
+name: "Modul 987 Lab Exercise"
+instances:
+  - name: firewall
+    image: VyOS 1.4.3
+    size: micro
+  - name: server
+    image: Windows Server 2025
+    size: medium
+  - name: client
+    image: Windows Server 2022
+    size: medium
+networks:
+  - name: dmz
+    netmask: 255.255.255.0
+    start-ip: 192.168.1.1
+    end-ip: 192.168.1.254
+    connects:
+      - firewall:
+        ip: 192.168.1.1
+      - server:
+        ip: 192.168.1.2
+  - name: internet
+    netmask: 255.255.0.0
+    start-ip: 172.16.0.1
+    end-ip: 172.16.1.254
+    connects:
+      - firewall:
+        ip: 172.16.0.1
+      - client:
+        ip: 172.16.0.2

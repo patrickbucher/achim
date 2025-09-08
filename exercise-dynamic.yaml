@@ -16,5 +16,5 @@ networks:
       - server
   - name: internet
     connects:
-      - client
       - firewall
+      - client
