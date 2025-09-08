@@ -8,7 +8,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 import requests
 import yaml
 
-from achim.utils import is_valid_ipv4, parse_ipv4, increment_ip
+from achim.utils import is_valid_ipv4, increment_ip
 
 sizes = ["micro", "tiny", "small", "medium", "large", "extra-large"]
 instance_type_filter = {
@@ -231,8 +231,8 @@ def destroy_group(ctx, name, sure, destroy_permanent):
 @click.option(
     "--autostart", help="automatically start VMs", is_flag=True, default=False
 )
-# TODO: ignore existing!
-# TODO: permanent only?
+# TODO: detect and warn about existing instances!
+# TODO: implement "ignore existing" flag!
 @click.pass_context
 def create_scenario(ctx, scenario, group, context, keyname, autostart):
     scenario_data = yaml.load(scenario.read(), Loader=yaml.SafeLoader)
