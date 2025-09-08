@@ -609,7 +609,15 @@ def determine_networks(network_data, user_data, instances_by_username):
         network_name = entry["network"]["name"]
         user_name = entry["user"]["name"]
         connect_hosts = entry["network"]["connects"]
+        net = entry["network"]
+        ip_config = {
+            "netmask": net.get("netmask", ""),
+            "start-ip": net.get("start-ip", ""),
+            "end-ip": net.get("end-ip", ""),
+        }
+        ip_config = ip_config if all(ip_config.values()) else {}
         return {
+            **ip_config,
             "name": network_name,
             "canonical_name": to_host_name(f"{network_name}_{user_name}"),
             "connects": [
