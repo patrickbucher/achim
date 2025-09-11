@@ -231,8 +231,6 @@ def destroy_group(ctx, name, sure, destroy_permanent):
 @click.option(
     "--autostart", help="automatically start VMs", is_flag=True, default=False
 )
-# TODO: detect and warn about existing instances!
-# TODO: implement "ignore existing" flag!
 @click.pass_context
 def create_scenario(ctx, scenario, group, context, keyname, autostart):
     scenario_data = yaml.load(scenario.read(), Loader=yaml.SafeLoader)
@@ -282,6 +280,42 @@ def create_scenario(ctx, scenario, group, context, keyname, autostart):
         for a in determine_attachments(exo, networks_by_username)
     ]
     print(attachments)
+
+
+@cli.command(help="Stop all Instances by Scenario Name")
+@click.option("--name", help="scenario name (see scenario file)")
+@click.pass_context
+def stop_scenario(ctx, name):
+    exo = ctx.obj["exo"]
+    if not name:
+        fatal("scenario name required")
+    instances = exo.get_instances()
+    scenario_instances = list(
+        filter(lambda i: i.get("labels", {}).get("scenario", "") == name, instances)
+    )
+    if not scenario_instances:
+        fatal(f"no instances for scenario '{name}' found")
+    for instance in scenario_instances:
+        exo.stop_instance(instance["id"])
+        print(f'stopped instance {instance["name"]}')
+
+
+@cli.command(help="Start all Instances by Scenario Name")
+@click.option("--name", help="scenario name (see scenario file)")
+@click.pass_context
+def start_scenario(ctx, name):
+    exo = ctx.obj["exo"]
+    if not name:
+        fatal("scenario name required")
+    instances = exo.get_instances()
+    scenario_instances = list(
+        filter(lambda i: i.get("labels", {}).get("scenario", "") == name, instances)
+    )
+    if not scenario_instances:
+        fatal(f"no instances for scenario '{name}' found")
+    for instance in scenario_instances:
+        exo.start_instance(instance["id"])
+        print(f'started instance {instance["name"]}')
 
 
 @cli.command(help="Destroy Scenario Instances and Networks by Scenario Name")

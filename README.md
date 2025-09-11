@@ -80,6 +80,14 @@ Create a new scenario (as defined in `scenario.yaml`) for a group (as defined in
 
     $ achim create-scenario --scenario scenario.yaml --group group.yaml --keyname t15 --context m987 --autostart    
 
+Start instances of a scenario (using the `name` defined in `scenario.yaml`):
+
+    achim start-scenario --name 'Modul 987 Lab Exercise'
+
+Stop instances of a scenario (using the `name` defined in `scenario.yaml`):
+
+    achim stop-scenario --name 'Modul 987 Lab Exercise'
+
 Destroy it again (using the `name` defined in `scenario.yaml`):
 
     $ achim destroy-scenario --name 'Modul 987 Lab Exercise'

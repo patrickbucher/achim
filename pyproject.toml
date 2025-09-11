@@ -18,7 +18,7 @@ keywords = ["Cloud", "Exoscale", "Compute"]
 license = {text = "MIT"}
 name = "achim"
 readme = "README.md"
-version = "0.0.11"
+version = "0.0.12"
 
 [project.scripts]
 achim = "achim:cli"
