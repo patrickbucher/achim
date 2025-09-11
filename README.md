@@ -74,6 +74,16 @@ Destroy instances for a group:
 
     $ achim stop-group --name students --sure
 
+### Scenarios
+
+Create a new scenario (as defined in `scenario.yaml`) for a group (as defined in `group.yaml`):
+
+    $ achim create-scenario --scenario scenario.yaml --group group.yaml --keyname t15 --context m987 --autostart    
+
+Destroy it again (using the `name` defined in `scenario.yaml`):
+
+    $ achim destroy-scenario --name 'Modul 987 Lab Exercise'
+
 ### Inventory
 
 Create an Ansible inventory of existing instances, grouped by labels `context`,
