@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style type="text/css">
+      body {
+        margin: 0 auto;
+        padding: 1em;
+        font-family: sans-serif;
+        font-size: 24px;
+      }
+
+      table {
+        border: none;
+      }
+
+      td,
+      th {
+        border: none;
+        padding: 0.5em 1em;
+        text-align: left;
+      }
+
+      table tr:nth-child(even) td {
+        background: black;
+        color: white;
+      }
+      table tr:nth-child(odd) td {
+        background: white;
+        color: black;
+      }
+    </style>
+    <title>Scenario Overview</title>
+  </head>
+
+  <body>
+    <h1>Scenario Overview <em>{{ name }}</em></h1>
+    <table>
+      <tr>
+        <th>Owner</th>
+        <th>Host</th>
+        <th>Image</th>
+        <th>IP</th>
+        <th>Username</th>
+        <th>Password</th>
+        <th>Connection</th>
+      </tr>
+      {% for i in instances %}
+      <tr>
+        <td>
+          <tt>
+            {% if not loop.previtem or i['owner'] != loop.previtem['owner'] %}
+                {{ i['owner'] }}
+            {% else %}
+                "
+            {% endif %}
+          </tt>
+        </td>
+        {% set last_owner = i['owner'] %}
+        <td><tt>{{ i['name'] }}</tt></td>
+        <td><tt>{{ i['image'] }}</tt></td>
+        <td><tt>{{ i['ip'] }}</tt></td>
+        <td><tt>{{ i['user'] }}</tt></td>
+        <td><tt>{{ i['password'] }}</tt></td>
+        <td><tt>{{ i['connect'] }}</tt></td>
+      </tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>

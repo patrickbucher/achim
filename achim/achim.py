@@ -342,6 +342,51 @@ def destroy_scenario(ctx, name, sure):
     print(networks)
 
 
+@cli.command(help="Generate HTML Overview Page for a Scenario")
+@click.option("--name", help="scenario name (see scenario file)")
+@click.option("--hide-password", is_flag=True, default=False, help="Hide Password")
+@click.option("--file", type=click.File("w", encoding="utf-8"), help="HTML output file")
+@click.pass_context
+def scenario_overview(ctx, name, hide_password, file):
+    exo = ctx.obj["exo"]
+    if not name:
+        fatal("scenario name required")
+    instances = list(
+        filter(
+            lambda i: i.get("labels", {}).get("scenario", "") == name,
+            exo.get_instances(),
+        )
+    )
+    if not instances:
+        fatal(f"no instances for scenario '{name}' found")
+    overview_data = []
+    for instance in instances:
+        labels = instance.get("labels", {})
+        id = instance["id"]
+        pw = exo.get_instance_password(id)
+        template_id = instance.get("template", {}).get("id", "")
+        template = exo.get_template(template_id) if template_id else {}
+        family = template.get("family", "")
+        default_user = template.get("default-user", "")
+        ip = instance.get("public-ip", "")
+        connect = ("rdp" if family == "windows" else "ssh") + f" {default_user}@{ip}"
+        data = {
+            "owner": labels.get("owner", ""),
+            "name": instance["name"],
+            "image": template.get("name", ""),
+            "ip": ip,
+            "user": default_user,
+            "password": pw if not hide_password else "********",
+            "connect": connect,
+        }
+        overview_data.append(data)
+    overview_data = sorted(overview_data, key=lambda o: o["name"])
+    overview_data = sorted(overview_data, key=lambda o: o["owner"])
+    env = Environment(loader=PackageLoader("achim"), autoescape=select_autoescape())
+    template = env.get_template("scenario.html")
+    file.write(template.render(instances=overview_data, name=name))
+
+
 @cli.command(help="Tests an HTTP Service on the Instances of the Group")
 @click.option("--name", help="group name")
 @click.option("--suffix", help="URL suffix", default="")

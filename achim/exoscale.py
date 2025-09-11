@@ -17,6 +17,9 @@ class Exoscale:
         templates = self.get("template").json()["templates"]
         matches = filter(lambda t: t["name"] == name, templates)
         return next(matches)
+    
+    def get_template(self, id):
+        return self.get(f"template/{id}").json()
 
     def get_instance_types(self, rules):
         def filter_rule(instance_type, key, value):
@@ -48,6 +51,10 @@ class Exoscale:
         instances = self.get("instance").json()["instances"]
         return next(filter(lambda i: i["name"] == name, instances))
 
+    def get_instance_password(self, id):
+        res = self.get(f"instance/{id}:password")
+        return res.json()["password"] if res.status_code == 200 else ""
+    
     def create_instance(
         self, name, template, instance_type, ssh_key, labels={}, autostart=False
     ):
@@ -98,7 +105,7 @@ class Exoscale:
 
     def delete_network(self, network):
         return self.delete(f"private-network/{network}").json()
-    
+
     def get_network(self, id):
         return self.get(f"private-network/{id}").json()
 

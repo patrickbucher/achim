@@ -1,56 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="utf-8">
+  <head>
+    <meta charset="utf-8" />
     <style type="text/css">
-        body {
-            margin: 0 auto;
-            font-family: sans-serif;
-            font-size: 24px;
-            max-width: 1800px;
-        }
+      body {
+        margin: 0 auto;
+        font-family: sans-serif;
+        font-size: 24px;
+        max-width: 1800px;
+      }
 
-        table {
-            border: none;
-        }
+      table {
+        border: none;
+      }
 
-        td, th {
-            border: none;
-            padding: 0.5em 1em;
-            text-align: left;
-        }
+      td,
+      th {
+        border: none;
+        padding: 0.5em 1em;
+        text-align: left;
+      }
 
-        table tr:nth-child(even) td {
-            background: black;
-            color: white;
-        }
-        table tr:nth-child(odd) td {
-            background: white;
-            color: black;
-        }
+      table tr:nth-child(even) td {
+        background: black;
+        color: white;
+      }
+      table tr:nth-child(odd) td {
+        background: white;
+        color: black;
+      }
     </style>
     <title>Instance Overview</title>
-</head>
+  </head>
 
-<body>
-    <h1>Instance Overview{% if condition %} for <tt>{{ condition }}</tt>{% endif %}</h1>
+  <body>
+    <h1>
+      Instance Overview{% if condition %} for <tt>{{ condition }}</tt>{% endif
+      %}
+    </h1>
     <table>
-        <tr>
-            <th>Owner</th>
-            <th>SSH Command</th>
-            <th>Host Name</th>
-            <th>IP</th>
-        </tr>
-        {% for (owner, host_name, ip, ssh_cmd) in instances %}
-        <tr>
-            <td><tt>{{ owner }}</tt></td>
-            <td><tt><strong>{{ ssh_cmd }}</strong></tt></td>
-            <td><tt>{{ host_name }}</tt></td>
-            <td><tt>{{ ip }}</tt></td>
-        </tr>
-        {% endfor %}
+      <tr>
+        <th>Owner</th>
+        <th>SSH Command</th>
+        <th>Host Name</th>
+        <th>IP</th>
+      </tr>
+      {% for (owner, host_name, ip, ssh_cmd) in instances %}
+      <tr>
+        <td><tt>{{ owner }}</tt></td>
+        <td>
+          <tt><strong>{{ ssh_cmd }}</strong></tt>
+        </td>
+        <td><tt>{{ host_name }}</tt></td>
+        <td><tt>{{ ip }}</tt></td>
+      </tr>
+      {% endfor %}
     </table>
-</body>
-
+  </body>
 </html>

@@ -107,6 +107,10 @@ Create an Ansible playbook to create a user for its instance with its SSH key au
 
 ### Overview
 
-Create an HTML overview page for names, IPs, and `ssh` commands:
+Create a HTML overview page with names, IPs, and `ssh` commands for a Group:
 
     $ achim overview --key group --value students --file overview.html
+
+Create a HTML overview page with owner, host, image, ip, username, password and connection information for a Scenario:
+
+    $ achim scenario-overview --name 'Modul 987 Lab Exercise' --file scenario.html
