@@ -8,7 +8,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 import requests
 import yaml
 
-from achim.utils import is_valid_ipv4, increment_ip
+from achim.utils import is_valid_ipv4
 
 sizes = ["micro", "tiny", "small", "medium", "large", "extra-large"]
 instance_type_filter = {
@@ -612,7 +612,7 @@ def determine_networks(network_data, user_data, instances_by_username):
         network_name = entry["network"]["name"]
         user_name = entry["user"]["name"]
         connect_hosts = entry["network"]["connects"]
-        host_ips = {e["name"]: e.get("ip", "") for e in connect_hosts}
+        host_ips = {e["name"]: e["ip"] for e in connect_hosts}
         net = entry["network"]
         ip_config = {
             "netmask": net.get("netmask", ""),
@@ -627,7 +627,7 @@ def determine_networks(network_data, user_data, instances_by_username):
             "connects": [
                 {
                     "canonical_name": instance["canonical_name"],
-                    "ip": host_ips.get(instance["name"], ""),
+                    "ip": host_ips[instance["name"]],
                 }
                 for instance_username, instances in instances_by_username.items()
                 for instance in instances

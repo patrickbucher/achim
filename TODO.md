@@ -1,6 +1,7 @@
 # TODO
 
-- [ ] new command to resize disk of an instance
-    - [ ] consider defaults
-- [ ] support scenarios
-    - [ ] new command `fix-scenario` to re-create sources
+- [ ] scenarios
+    - [ ] create overview sheet incl. credentials
+    - [ ] idea: new command `fix-scenario` to re-create sources
+- [ ] instances
+    - [ ] idea: resize disk of one or multiple instances
