@@ -11,20 +11,20 @@ instances:
     size: medium
 networks:
   - name: dmz
+    start-ip: 10.0.0.10
+    end-ip: 10.0.0.20
     netmask: 255.255.255.0
-    start-ip: 192.168.1.1
-    end-ip: 192.168.1.254
     connects:
-      - firewall:
-        ip: 192.168.1.1
-      - server:
-        ip: 192.168.1.2
+      - name: firewall
+        ip: 10.0.0.11
+      - name: server
+        ip: 10.0.0.12
   - name: internet
+    start-ip: 192.168.0.10
+    end-ip: 192.168.0.20
     netmask: 255.255.0.0
-    start-ip: 172.16.0.1
-    end-ip: 172.16.1.254
     connects:
-      - firewall:
-        ip: 172.16.0.1
-      - client:
-        ip: 172.16.0.2
+      - name: firewall
+        ip: 192.168.0.11
+      - name: client
+        ip: 192.168.0.12

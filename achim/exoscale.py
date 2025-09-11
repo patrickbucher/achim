@@ -66,8 +66,8 @@ class Exoscale:
     def create_network(
         self,
         name,
-        start_ip="10.0.0.1",
-        end_ip="10.0.0.150",
+        start_ip="10.0.0.10",
+        end_ip="10.0.0.100",
         netmask="255.255.255.0",
         description="",
         labels={},

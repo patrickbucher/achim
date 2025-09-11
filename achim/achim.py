@@ -264,20 +264,23 @@ def create_scenario(ctx, scenario, group, context, keyname, autostart):
         for username, instances in instances_by_username.items()
         for instance_data in instances
     ]
+    print(instances)
     networks = [
         exo.create_network(
             to_host_name(network_data["canonical_name"]),
+            start_ip=network_data["start-ip"],
+            end_ip=network_data["end-ip"],
+            netmask=network_data["netmask"],
             labels={"scenario": scenario_data["name"], "owner": username},
         )
         for username, networks in networks_by_username.items()
         for network_data in networks
     ]
+    print(networks)
     attachments = [
         exo.attach_network(a["network_id"], a["instance_id"], a["ip"])
         for a in determine_attachments(exo, networks_by_username)
     ]
-    print(instances)
-    print(networks)
     print(attachments)
 
 
@@ -609,6 +612,7 @@ def determine_networks(network_data, user_data, instances_by_username):
         network_name = entry["network"]["name"]
         user_name = entry["user"]["name"]
         connect_hosts = entry["network"]["connects"]
+        host_ips = {e["name"]: e.get("ip", "") for e in connect_hosts}
         net = entry["network"]
         ip_config = {
             "netmask": net.get("netmask", ""),
@@ -621,10 +625,14 @@ def determine_networks(network_data, user_data, instances_by_username):
             "name": network_name,
             "canonical_name": to_host_name(f"{network_name}_{user_name}"),
             "connects": [
-                instance["canonical_name"]
+                {
+                    "canonical_name": instance["canonical_name"],
+                    "ip": host_ips.get(instance["name"], ""),
+                }
                 for instance_username, instances in instances_by_username.items()
                 for instance in instances
-                if instance["name"] in connect_hosts and instance_username == user_name
+                if instance["name"] in host_ips.keys()
+                and instance_username == user_name
             ],
         }
 
@@ -651,12 +659,16 @@ def determine_attachments(exo, networks_by_username):
         connects = network_data["connects"]
         network = next(filter(lambda n: n["name"] == name, networks))
         network_id = network["id"]
-        current_ip = network["start-ip"]
         for connect in connects:
-            instance_id = next(filter(lambda i: i["name"] == connect, instances))["id"]
-            current_ip = increment_ip(current_ip)
+            instance_id = next(
+                filter(lambda i: i["name"] == connect["canonical_name"], instances)
+            )["id"]
             attachments.append(
-                {"network_id": network_id, "instance_id": instance_id, "ip": current_ip}
+                {
+                    "network_id": network_id,
+                    "instance_id": instance_id,
+                    "ip": connect["ip"],
+                }
             )
     return attachments
 
