@@ -164,6 +164,8 @@ def create_group(
             owner_name,
             autostart,
             permanent,
+            image=image,
+            size=size
         )
         instances.append(instance)
     print(instances)
