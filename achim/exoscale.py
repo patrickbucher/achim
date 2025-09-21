@@ -17,7 +17,7 @@ class Exoscale:
         templates = self.get("template").json()["templates"]
         matches = filter(lambda t: t["name"] == name, templates)
         return next(matches)
-    
+
     def get_template(self, id):
         return self.get(f"template/{id}").json()
 
@@ -44,6 +44,9 @@ class Exoscale:
     def destroy_instance(self, id):
         return self.delete(f"instance/{id}").json()
 
+    def update_instance_labels(self, id, labels={}):
+        return self.put(f"instance/{id}", {"labels": labels}).json()
+
     def get_ssh_key(self, name):
         return self.get(f"ssh-key/{name}").json()
 
@@ -54,7 +57,7 @@ class Exoscale:
     def get_instance_password(self, id):
         res = self.get(f"instance/{id}:password")
         return res.json()["password"] if res.status_code == 200 else ""
-    
+
     def create_instance(
         self, name, template, instance_type, ssh_key, labels={}, autostart=False
     ):
