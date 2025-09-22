@@ -165,7 +165,7 @@ def create_group(
             autostart,
             permanent,
             image=image,
-            size=size
+            size=size,
         )
         instances.append(instance)
     print(instances)
@@ -601,6 +601,22 @@ def destroy_all_networks(ctx, sure):
     exo = ctx.obj["exo"]
     for network in exo.get_networks():
         print(exo.delete_network(network["id"]))
+
+
+@cli.command(help="Add Label to all Instances")
+@click.option("--key", help="Key of the Label", required=True)
+@click.option("--value", help="Value of the Label", required=True)
+@click.pass_context
+def add_label(ctx, key, value):
+    exo = ctx.obj["exo"]
+    if not key or not value:
+        fatal("key and value required")
+    instances = exo.get_instances()
+    for instance in instances:
+        existing = instance.get("labels", {})
+        print(
+            exo.update_instance_labels(instance["id"], labels={**existing, key: value})
+        )
 
 
 def do_create_instance(
