@@ -1,5 +1,8 @@
 from exoscale_auth import ExoscaleV2Auth
 import requests
+import base64
+
+import yaml
 
 
 class Exoscale:
@@ -59,9 +62,19 @@ class Exoscale:
         return res.json()["password"] if res.status_code == 200 else ""
 
     def create_instance(
-        self, name, template, instance_type, ssh_key, labels={}, autostart=False
+        self,
+        name,
+        template,
+        instance_type,
+        ssh_key,
+        labels={},
+        autostart=False,
+        cloud_init_data={},
     ):
         bytes_to_gb = lambda b: int(b / 1024**3)
+        cloud_init_dump = yaml.dump(cloud_init_data, Dumper=yaml.Dumper)
+        cloud_init_bytes = ("#cloud-config\n" + cloud_init_dump).encode(encoding="utf-8")
+        cloud_init_base64 = base64.b64encode(cloud_init_bytes).decode(encoding="utf-8")
         payload = {
             "auto-start": autostart,
             "name": name,
@@ -70,6 +83,7 @@ class Exoscale:
             "ssh-key": {"name": ssh_key["name"]},
             "disk-size": bytes_to_gb(template["size"]) if "size" in template else 10,
             "labels": labels,
+            "user-data": cloud_init_base64,
         }
         return self.post("instance", payload).json()
 

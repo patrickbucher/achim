@@ -1,0 +1,10 @@
+#cloud-config
+user:
+  name: joe-doe
+  groups: sudo
+  lock_passwd: false
+  plain_text_passwd: topsecret
+  shell: /usr/bin/bash
+  ssh_authorized_keys:
+    - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJhx+5Z/Ao+9w3EujyXcKcE8Wzw0uyApawro5dlMXQwa patrick.bucher@sluz.ch"
+  sudo: "ALL=(ALL) NOPASSWD:ALL"

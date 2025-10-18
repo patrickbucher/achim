@@ -53,18 +53,44 @@ def list_images(ctx, contains):
 @click.option("--permanent", help="permanent instance", is_flag=True, default=False)
 @click.option("--image", help="image name", default=default_image)
 @click.option("--size", help="instance size", default="micro")
+@click.option(
+    "--cloud-init", type=click.File("r", encoding="utf-8"), help="cloud init YAML file"
+)
 @click.pass_context
 def create_instance(
-    ctx, name, keyname, context, group, owner, autostart, permanent, image, size
+    ctx,
+    name,
+    keyname,
+    context,
+    group,
+    owner,
+    autostart,
+    permanent,
+    image,
+    size,
+    cloud_init,
 ):
     must_be_valid_image(ctx, image)
     must_be_valid_size(size)
+    cloud_init_data = {}
+    if cloud_init:
+        cloud_init_data = yaml.load(cloud_init, yaml.SafeLoader)
     exo = ctx.obj["exo"]
     existing = exo.get_instances()
     if any([instance["name"] == name for instance in existing]):
         fatal(f"name '{name}' is already in use")
     instance = do_create_instance(
-        exo, name, keyname, context, group, owner, autostart, permanent, image, size
+        exo,
+        name,
+        keyname,
+        context,
+        group,
+        owner,
+        autostart,
+        permanent,
+        image,
+        size,
+        cloud_init_data=cloud_init_data,
     )
     print(instance)
 
@@ -631,6 +657,7 @@ def do_create_instance(
     image="",
     size="",
     additional_labels={},
+    cloud_init_data={},
 ):
     template = exo.get_template_by_name(image)
     instance_types = exo.get_instance_types(instance_type_filter)
@@ -644,7 +671,15 @@ def do_create_instance(
         **additional_labels,
     }
     labels = {k: v for (k, v) in labels.items() if v}
-    return exo.create_instance(name, template, smallest, ssh_key, labels, autostart)
+    return exo.create_instance(
+        name,
+        template,
+        smallest,
+        ssh_key,
+        labels,
+        autostart,
+        cloud_init_data=cloud_init_data,
+    )
 
 
 def get_image_names(ctx, contains=""):
