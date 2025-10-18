@@ -61,6 +61,15 @@ class Exoscale:
         res = self.get(f"instance/{id}:password")
         return res.json()["password"] if res.status_code == 200 else ""
 
+    def get_dns_domains(self):
+        return self.get(f"dns-domain").json()
+
+    def get_dns_records(self, id):
+        return self.get(f"dns-domain/{id}/record").json()
+
+    def delete_dns_record(self, domain_id, record_id):
+        return self.delete(f"dns-domain/{domain_id}/record/{record_id}").json()
+
     def create_instance(
         self,
         name,
@@ -73,7 +82,9 @@ class Exoscale:
     ):
         bytes_to_gb = lambda b: int(b / 1024**3)
         cloud_init_dump = yaml.dump(cloud_init_data, Dumper=yaml.Dumper)
-        cloud_init_bytes = ("#cloud-config\n" + cloud_init_dump).encode(encoding="utf-8")
+        cloud_init_bytes = ("#cloud-config\n" + cloud_init_dump).encode(
+            encoding="utf-8"
+        )
         cloud_init_base64 = base64.b64encode(cloud_init_bytes).decode(encoding="utf-8")
         payload = {
             "auto-start": autostart,

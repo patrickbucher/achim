@@ -645,6 +645,27 @@ def add_label(ctx, key, value):
         )
 
 
+@cli.command(help="Flush all non-system DNS Records of a Domain")
+@click.option("--domain", help="Domain to be Flushed", required=True)
+@click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
+@click.pass_context
+def flush_dns(ctx, domain, sure):
+    if not sure:
+        return
+    exo = ctx.obj["exo"]
+    domains = exo.get_dns_domains().get("dns-domains", [])
+    domain_id = next(filter(lambda d: d.get("unicode-name", "") == domain, domains))[
+        "id"
+    ]
+    records = exo.get_dns_records(domain_id).get("dns-domain-records", [])
+    non_system_records = filter(
+        lambda r: r.get("system-record", True) == False, records
+    )
+    record_ids = map(lambda r: r.get("id", ""), non_system_records)
+    for record_id in record_ids:
+        print(exo.delete_dns_record(domain_id, record_id))
+
+
 def do_create_instance(
     exo,
     name,
