@@ -653,17 +653,29 @@ def flush_dns(ctx, domain, sure):
     if not sure:
         return
     exo = ctx.obj["exo"]
-    domains = exo.get_dns_domains().get("dns-domains", [])
-    domain_id = next(filter(lambda d: d.get("unicode-name", "") == domain, domains))[
-        "id"
-    ]
-    records = exo.get_dns_records(domain_id).get("dns-domain-records", [])
-    non_system_records = filter(
-        lambda r: r.get("system-record", True) == False, records
-    )
-    record_ids = map(lambda r: r.get("id", ""), non_system_records)
+    domain_id = exo.get_domain_id(domain)
+    records = exo.get_non_system_dns_records(domain_id)
+    record_ids = map(lambda r: r.get("id", ""), records)
     for record_id in record_ids:
         print(exo.delete_dns_record(domain_id, record_id))
+
+
+@cli.command(help="Sync VM hostnames with DNS records for a Domain")
+@click.option("--domain", help="Domain to be Flushed", required=True)
+@click.pass_context
+def sync_dns(ctx, domain):
+    exo = ctx.obj["exo"]
+    ips_hostnames = [(i["public-ip"], i["name"]) for i in exo.get_instances()]
+    domain_id = exo.get_domain_id(domain)
+    records = exo.get_non_system_dns_records(domain_id)
+
+    existing = set([(r["content"], r["name"]) for r in records])
+    required = set(ips_hostnames)
+    to_be_deleted = existing - required
+    to_be_created = required - existing
+    print("to be deleted", to_be_deleted)  # FIXME: test and implement deletion later
+    for ip, name in to_be_created:
+        print(exo.create_dns_record(domain_id, name, ip, ttl=300))
 
 
 def do_create_instance(

@@ -64,11 +64,22 @@ class Exoscale:
     def get_dns_domains(self):
         return self.get(f"dns-domain").json()
 
-    def get_dns_records(self, id):
-        return self.get(f"dns-domain/{id}/record").json()
+    def get_domain_id(self, domain):
+        domains = self.get_dns_domains()["dns-domains"]
+        return next(filter(lambda d: d["unicode-name"] == domain, domains))["id"]
+
+    def get_non_system_dns_records(self, id):
+        records = self.get(f"dns-domain/{id}/record").json()["dns-domain-records"]
+        return list(filter(lambda r: r.get("system-record", True) == False, records))
 
     def delete_dns_record(self, domain_id, record_id):
         return self.delete(f"dns-domain/{domain_id}/record/{record_id}").json()
+
+    def create_dns_record(self, domain_id, name, content, type="A", ttl=3600):
+        return self.post(
+            f"dns-domain/{domain_id}/record",
+            {"name": name, "type": type, "content": content, "ttl": ttl},
+        ).json()
 
     def create_instance(
         self,
