@@ -673,9 +673,13 @@ def sync_dns(ctx, domain):
     required = set(ips_hostnames)
     to_be_deleted = existing - required
     to_be_created = required - existing
-    print("to be deleted", to_be_deleted)  # FIXME: test and implement deletion later
+    for ip, _name in to_be_deleted:
+        matches = filter(lambda r: r["content"] == ip, records)
+        matching_ids = map(lambda r: r["id"], matches)
+        for id in matching_ids:
+            print("deleted", exo.delete_dns_record(domain_id, id))
     for ip, name in to_be_created:
-        print(exo.create_dns_record(domain_id, name, ip, ttl=300))
+        print("created", exo.create_dns_record(domain_id, name, ip, ttl=300))
 
 
 def do_create_instance(
