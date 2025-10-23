@@ -19,3 +19,7 @@
 
         debian@box1$ ping 10.0.0.5
         debian@box2$ ping 10.0.0.6
+
+On Windows:
+
+    New-NetRoute -DestinationPrefix "10.0.0.0/24" -NextHop "10.0.0.11" -InterfaceAlias "Ethernet"
