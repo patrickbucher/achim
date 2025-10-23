@@ -1,7 +1,7 @@
-name: "Modul 987 Lab Exercise"
+name: "Modul 999"
 instances:
   - name: firewall
-    image: VyOS 1.4.3
+    image: IPFire 2.29 - Core Update 197
     size: micro
   - name: server
     image: Windows Server 2025
@@ -19,7 +19,7 @@ networks:
         ip: 10.0.0.11
       - name: server
         ip: 10.0.0.12
-  - name: internet
+  - name: intranet
     start-ip: 192.168.0.10
     end-ip: 192.168.0.20
     netmask: 255.255.0.0
