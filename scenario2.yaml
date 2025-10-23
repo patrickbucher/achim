@@ -1,0 +1,30 @@
+name: "Modul 999"
+instances:
+  - name: windows
+    image: Windows Server 2025
+    size: medium
+  - name: ubuntu
+    image: Linux Ubuntu 25.04 64-bit
+    size: medium
+  - name: firewall
+    image: IPFire 2.29 - Core Update 197
+    size: micro
+networks:
+  - name: orange
+    start-ip: 10.0.0.10
+    end-ip: 10.0.0.20
+    netmask: 255.255.255.0
+    connects:
+      - name: firewall
+        ip: 10.0.0.11
+      - name: ubuntu
+        ip: 10.0.0.12
+  - name: green
+    start-ip: 192.168.0.10
+    end-ip: 192.168.0.20
+    netmask: 255.255.0.0
+    connects:
+      - name: firewall
+        ip: 192.168.0.11
+      - name: windows
+        ip: 192.168.0.12
