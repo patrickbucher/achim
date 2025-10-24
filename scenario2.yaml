@@ -10,15 +10,6 @@ instances:
     image: IPFire 2.29 - Core Update 197
     size: micro
 networks:
-  - name: orange
-    start-ip: 10.0.0.1
-    end-ip: 10.0.0.20
-    netmask: 255.255.255.0
-    connects:
-      - name: firewall
-        ip: 10.0.0.1
-      - name: ubuntu
-        ip: 10.0.0.10
   - name: green
     start-ip: 192.168.0.1
     end-ip: 192.168.0.20
@@ -28,3 +19,12 @@ networks:
         ip: 192.168.0.1
       - name: windows
         ip: 192.168.0.10
+  - name: orange
+    start-ip: 10.0.0.1
+    end-ip: 10.0.0.20
+    netmask: 255.255.255.0
+    connects:
+      - name: firewall
+        ip: 10.0.0.1
+      - name: ubuntu
+        ip: 10.0.0.10
