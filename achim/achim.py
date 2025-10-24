@@ -682,6 +682,18 @@ def sync_dns(ctx, domain):
         print("created", exo.create_dns_record(domain_id, name, ip, ttl=300))
 
 
+@cli.command(help="Check Instance State for a Label/Value Combination")
+@click.option("--label", help="Label to be matched.")
+@click.option("--value", help="Value to be matched.")
+@click.pass_context
+def state(ctx, label, value):
+    exo = ctx.obj["exo"]
+    instances = exo.get_instance_by(label, value)
+    instances = [(i["labels"].get("owner", ""), i["state"]) for i in instances]
+    for owner, state in sorted(instances, key=lambda i: (i[1], i[0])):
+        print(f"{owner:40s} {state}")
+
+
 def do_create_instance(
     exo,
     name,

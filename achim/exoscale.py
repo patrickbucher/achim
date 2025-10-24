@@ -57,6 +57,12 @@ class Exoscale:
         instances = self.get("instance").json()["instances"]
         return next(filter(lambda i: i["name"] == name, instances))
 
+    def get_instance_by(self, label, value):
+        instances = self.get("instance").json()["instances"]
+        return list(
+            filter(lambda i: i.get("labels", {}).get(label, "") == value, instances)
+        )
+
     def get_instance_password(self, id):
         res = self.get(f"instance/{id}:password")
         return res.json()["password"] if res.status_code == 200 else ""
