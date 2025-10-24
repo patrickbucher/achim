@@ -11,20 +11,20 @@ instances:
     size: micro
 networks:
   - name: orange
-    start-ip: 10.0.0.10
+    start-ip: 10.0.0.1
     end-ip: 10.0.0.20
     netmask: 255.255.255.0
     connects:
       - name: firewall
-        ip: 10.0.0.11
+        ip: 10.0.0.1
       - name: ubuntu
-        ip: 10.0.0.12
+        ip: 10.0.0.10
   - name: green
-    start-ip: 192.168.0.10
+    start-ip: 192.168.0.1
     end-ip: 192.168.0.20
     netmask: 255.255.0.0
     connects:
       - name: firewall
-        ip: 192.168.0.11
+        ip: 192.168.0.1
       - name: windows
-        ip: 192.168.0.12
+        ip: 192.168.0.10
