@@ -1,13 +1,13 @@
 name: "OpenBSD Network"
 instances:
   - name: firewall
-    image: OpenBSD 7.7 64-Bit
+    image: OpenBSD 7.7 64-bit
     size: micro
   - name: server
-    image: OpenBSD 7.7 64-Bit
+    image: OpenBSD 7.7 64-bit
     size: micro
   - name: client
-    image: OpenBSD 7.7 64-Bit
+    image: OpenBSD 7.7 64-bit
     size: micro 
 networks:
   - name: internal
