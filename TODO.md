@@ -4,9 +4,8 @@
     - [ ] disallow creating groups without a name
 - [ ] scenarios
     - [ ] create scenario: detect and warn about existing instances
-    - [ ] create implement "ignore existing" flag
-    - [ ] idea: new command `fix-scenario` to re-create sources
+    - [ ] implement "ignore existing" flag
+    - [ ] idea: new command `fix-scenario` to re-create resources
+        - useful after firewall is messed up and needs to be re-created
 - [ ] instances
     - [ ] idea: resize disk of one or multiple instances
-    - [ ] instance protection: consider instead of "permanent" label
-        - https://openapi-v2.exoscale.com/operation/operation-add-instance-protection
