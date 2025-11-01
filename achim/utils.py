@@ -17,7 +17,7 @@ def is_valid_ipv4(ip_str):
 
 
 def parse_label_value_arg(arg):
-    pairs = arg.split(",") if arg.contains(",") else arg
+    pairs = arg.split(",") if "," in arg else [arg]
     label_values = [p.strip().split("=") for p in pairs]
     if not label_values:
         raise ValueError(f"invalid arg '{arg}'")

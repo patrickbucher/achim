@@ -19,7 +19,7 @@ default_image = "Linux Debian 13 (Trixie) 64-bit"
 default_user_name = "user"
 
 
-@click.group(help="Manage Exoscale Compute Instances for Groups")
+@click.group(help="Manage Exoscale Compute Instances")
 @click.pass_context
 def cli(ctx):
     config = dotenv_values(".env")
@@ -41,6 +41,21 @@ def cli(ctx):
 def list_images(ctx, contains):
     for name in get_image_names(ctx, contains):
         print(name)
+
+
+@cli.command(help="List Instances")
+@click.option("--by", help="label=value pairs selector")
+@click.pass_context
+def list_instances(ctx, by):
+    print(by)
+    exo = ctx.obj["exo"]
+    selectors = parse_label_value_arg(by)
+    print(selectors)
+    for instance in exo.get_instances_by(selectors):
+        info = {}
+        for key in ["id", "name", "state", "labels"]:
+            info[key] = instance.get(key, "")
+        print(info)
 
 
 @cli.command(help="Create a Compute Instance")

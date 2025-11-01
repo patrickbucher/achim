@@ -43,11 +43,12 @@ class Exoscale:
         selected = []
         for instance in instances:
             instance_labels = {
-                k: v for (k, v) in instance.get("labels", {}) if k in selectors
+                k: v for (k, v) in instance.get("labels", {}).items() if k in selectors
             }
+            print(instance_labels, selectors)
             if instance_labels == selectors:
                 selected.append(instance)
-        return instances
+        return selected
 
     def start_instance(self, id):
         return self.put(f"instance/{id}:start").json()
