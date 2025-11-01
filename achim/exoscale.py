@@ -54,6 +54,12 @@ class Exoscale:
 
     def stop_instance(self, id):
         return self.put(f"instance/{id}:stop").json()
+    
+    def protect_instance(self, id):
+        return self.put(f"instance/{id}:add-protection").json()
+
+    def deprotect_instance(self, id):
+        return self.put(f"instance/{id}:remove-protection").json()
 
     def destroy_instance(self, id):
         return self.delete(f"instance/{id}").json()

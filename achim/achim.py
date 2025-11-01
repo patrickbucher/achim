@@ -136,6 +136,28 @@ def destroy(ctx, by, sure):
         print(exo.destroy_instance(instance["id"]))
 
 
+@cli.command(help="Enable Instance Protection by Label/Value Selectors")
+@click.option("--by", help="label=value pairs selector")
+@click.pass_context
+def protect(ctx, by):
+    exo = ctx.obj["exo"]
+    selectors = parse_label_value_arg(by)
+    for instance in exo.get_instances_by(selectors):
+        print(exo.protect_instance(instance["id"]))
+
+@cli.command(help="Revoke Instance Protection by Label/Value Selectors")
+@click.option("--by", help="label=value pairs selector")
+@click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
+@click.pass_context
+def deprotect(ctx, by, sure):
+    if not sure:
+        return
+    exo = ctx.obj["exo"]
+    selectors = parse_label_value_arg(by)
+    for instance in exo.get_instances_by(selectors):
+        print(exo.deprotect_instance(instance["id"]))
+
+
 @cli.command(help="Create Compute Instances for a Group")
 @click.option(
     "--file", type=click.File("r", encoding="utf-8"), help="groups file to be used"
@@ -292,6 +314,7 @@ def destroy_all_networks(ctx, sure):
         print(exo.delete_network(network["id"]))
 
 
+# TODO: consider label/value selection (all instances if not restricted)
 @cli.command(help="Add Label to all Instances")
 @click.option("--key", help="Key of the Label", required=True)
 @click.option("--value", help="Value of the Label", required=True)
