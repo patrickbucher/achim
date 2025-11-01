@@ -64,10 +64,6 @@ class Exoscale:
     def get_ssh_key(self, name):
         return self.get(f"ssh-key/{name}").json()
 
-    def get_instance_by_name(self, name):
-        instances = self.get("instance").json()["instances"]
-        return next(filter(lambda i: i["name"] == name, instances))
-
     def get_instance_by(self, label, value):
         instances = self.get("instance").json()["instances"]
         return list(
