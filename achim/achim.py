@@ -50,7 +50,6 @@ def list_images(ctx, contains):
 @click.option("--group", help="group (label)", default="default")
 @click.option("--owner", help="owner (label)", default="default")
 @click.option("--autostart", help="automatically start VM", is_flag=True, default=False)
-@click.option("--permanent", help="permanent instance", is_flag=True, default=False)
 @click.option("--image", help="image name", default=default_image)
 @click.option("--size", help="instance size", default="micro")
 @click.option(
@@ -65,7 +64,6 @@ def create_instance(
     group,
     owner,
     autostart,
-    permanent,
     image,
     size,
     cloud_init,
@@ -87,7 +85,6 @@ def create_instance(
         group,
         owner,
         autostart,
-        permanent,
         image,
         size,
         cloud_init_data=cloud_init_data,
@@ -116,22 +113,12 @@ def stop_instance(ctx, name):
 @cli.command(help="Destroy a Compute Instance")
 @click.option("--name", help="instance name (hostname)")
 @click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
-@click.option(
-    "--destroy-permanent",
-    is_flag=True,
-    prompt=False,
-    default=False,
-    help="Destroy VM marked as 'permanent'",
-)
 @click.pass_context
-def destroy_instance(ctx, name, sure, destroy_permanent):
+def destroy_instance(ctx, name, sure):
     if not sure:
         return
     exo = ctx.obj["exo"]
     instance = exo.get_instance_by_name(name)
-    if instance["labels"].get("permanent", False) and not destroy_permanent:
-        print(f"deleting permanent instance {name} requires --destroy-permanent flag")
-        return
     print(exo.destroy_instance(instance["id"]))
 
 
@@ -150,16 +137,8 @@ def destroy_instance(ctx, name, sure, destroy_permanent):
     is_flag=True,
     default=False,
 )
-@click.option(
-    "--permanent-only",
-    help="only create an instance for users with the flag permanent set to true",
-    is_flag=True,
-    default=False,
-)
 @click.pass_context
-def create_group(
-    ctx, file, keyname, context, autostart, image, size, ignore_existing, permanent_only
-):
+def create_group(ctx, file, keyname, context, autostart, image, size, ignore_existing):
     must_be_valid_image(ctx, image)
     must_be_valid_size(size)
     exo = ctx.obj["exo"]
@@ -167,8 +146,6 @@ def create_group(
     group = yaml.load(file.read(), Loader=yaml.SafeLoader)
     group_name = sanitize_name(group["name"])
     users = group["users"]
-    if permanent_only:
-        users = list(filter(lambda u: u.get("permanent", False), users))
     host_names = {to_host_name(u["name"]) for u in users}
     existing_names = {e["name"] for e in existing}
     already_used = host_names.intersection(existing_names)
@@ -180,7 +157,6 @@ def create_group(
         owner_name = user["name"]
         if host_name in already_used and ignore_existing:
             continue
-        permanent = True if user.get("permanent", False) else False
         instance = do_create_instance(
             exo,
             host_name,
@@ -189,7 +165,6 @@ def create_group(
             group_name,
             owner_name,
             autostart,
-            permanent,
             image=image,
             size=size,
         )
@@ -222,26 +197,14 @@ def stop_group(ctx, name):
 @cli.command(help="Destroy Compute Instances for a Group")
 @click.option("--name", help="group name")
 @click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
-@click.option(
-    "--destroy-permanent",
-    is_flag=True,
-    prompt=False,
-    default=False,
-    help="Destroy VMs marked as 'permanent'",
-)
 @click.pass_context
-def destroy_group(ctx, name, sure, destroy_permanent):
+def destroy_group(ctx, name, sure):
     if not sure:
         return
     exo = ctx.obj["exo"]
     instances = exo.get_instances()
     instances = [i for i in instances if i["labels"].get("group", "") == name]
     for instance in instances:
-        if instance["labels"].get("permanent", False) and not destroy_permanent:
-            print(
-                f"skipping {instance['name']}; destroy using --destroy-permanent flag"
-            )
-            continue
         print(exo.destroy_instance(instance["id"]))
 
 
@@ -282,7 +245,6 @@ def create_scenario(ctx, scenario, group, context, keyname, autostart):
             group_name,
             username,
             autostart,
-            permanent=False,
             image=instance_data["image"],
             size=instance_data["size"],
             additional_labels={"scenario": scenario_data["name"]},
@@ -702,7 +664,6 @@ def do_create_instance(
     group="",
     owner="",
     autostart=False,
-    permanent=False,
     image="",
     size="",
     additional_labels={},
@@ -716,7 +677,6 @@ def do_create_instance(
         "context": context,
         "group": group,
         "owner": owner,
-        "permanent": permanent,
         **additional_labels,
     }
     labels = {k: v for (k, v) in labels.items() if v}
