@@ -43,16 +43,14 @@ def list_images(ctx, contains):
         print(name)
 
 
-@cli.command(help="List Instances by Label/Value selectors")
+@cli.command(help="List Instances by Label/Value Selectors")
 @click.option("--by", help="label=value pairs selector")
 @click.pass_context
 def list_instances(ctx, by):
     exo = ctx.obj["exo"]
     selectors = parse_label_value_arg(by)
     for instance in exo.get_instances_by(selectors):
-        info = {}
-        for key in ["id", "name", "state", "labels"]:
-            info[key] = instance.get(key, "")
+        info = extract_instance_info(instance, ["id", "name", "state", "labels"])
         print(info)
 
 
@@ -346,16 +344,14 @@ def sync_dns(ctx, domain):
         print("created", exo.create_dns_record(domain_id, name, ip, ttl=300))
 
 
-@cli.command(help="Check Instance State for a Label/Value Combination")
-@click.option("--label", help="Label to be matched.")
-@click.option("--value", help="Value to be matched.")
+@cli.command(help="Check Instance State for a Label/Value Selectors")
+@click.option("--by", help="label=value pairs selector")
 @click.pass_context
-def state(ctx, label, value):
+def state(ctx, by):
     exo = ctx.obj["exo"]
-    instances = exo.get_instance_by(label, value)
-    instances = [(i["labels"].get("owner", ""), i["state"]) for i in instances]
-    for owner, state in sorted(instances, key=lambda i: (i[1], i[0])):
-        print(f"{owner:40s} {state}")
+    selectors = parse_label_value_arg(by)
+    for instance in exo.get_instances_by(selectors):
+        print(extract_instance_info(instance, ["name", "state"]))
 
 
 def do_create_instance(
@@ -555,3 +551,10 @@ def eprint(message):
 def fatal(message):
     print(message, file=sys.stderr)
     sys.exit(1)
+
+
+def extract_instance_info(instance, fields):
+    info = {}
+    for key in fields:
+        info[key] = instance.get(key, "")
+    return info

@@ -64,12 +64,6 @@ class Exoscale:
     def get_ssh_key(self, name):
         return self.get(f"ssh-key/{name}").json()
 
-    def get_instance_by(self, label, value):
-        instances = self.get("instance").json()["instances"]
-        return list(
-            filter(lambda i: i.get("labels", {}).get(label, "") == value, instances)
-        )
-
     def get_instance_password(self, id):
         res = self.get(f"instance/{id}:password")
         return res.json()["password"] if res.status_code == 200 else ""
