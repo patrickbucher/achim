@@ -38,6 +38,17 @@ class Exoscale:
     def get_instances(self):
         return self.get("instance").json()["instances"]
 
+    def get_instances_by(self, selectors):
+        instances = self.get("instance").json()["instances"]
+        selected = []
+        for instance in instances:
+            instance_labels = {
+                k: v for (k, v) in instance.get("labels", {}) if k in selectors
+            }
+            if instance_labels == selectors:
+                selected.append(instance)
+        return instances
+
     def start_instance(self, id):
         return self.put(f"instance/{id}:start").json()
 

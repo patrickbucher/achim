@@ -14,3 +14,15 @@ def is_valid_ipv4(ip_str):
     segments = parse_ipv4(ip_str)
     segments = [s for s in segments if s >= 0 and s <= 255]
     return len(segments) == 4
+
+
+def parse_label_value_arg(arg):
+    pairs = arg.split(",") if arg.contains(",") else arg
+    label_values = [p.strip().split("=") for p in pairs]
+    if not label_values:
+        raise ValueError(f"invalid arg '{arg}'")
+    return {
+        x[0].strip(): x[1].strip()
+        for x in label_values
+        if len(x) == 2 and x[0] and x[1]
+    }
