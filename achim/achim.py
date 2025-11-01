@@ -344,7 +344,7 @@ def sync_dns(ctx, domain):
         print("created", exo.create_dns_record(domain_id, name, ip, ttl=300))
 
 
-@cli.command(help="Check Instance State for a Label/Value Selectors")
+@cli.command(help="Check Instance State for Label/Value Selectors")
 @click.option("--by", help="label=value pairs selector")
 @click.pass_context
 def state(ctx, by):
