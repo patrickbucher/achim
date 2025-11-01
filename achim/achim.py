@@ -47,7 +47,6 @@ def list_images(ctx, contains):
 @click.option("--by", help="label=value pairs selector")
 @click.pass_context
 def list_instances(ctx, by):
-    print(by)
     exo = ctx.obj["exo"]
     selectors = parse_label_value_arg(by)
     print(selectors)

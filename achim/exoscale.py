@@ -45,7 +45,6 @@ class Exoscale:
             instance_labels = {
                 k: v for (k, v) in instance.get("labels", {}).items() if k in selectors
             }
-            print(instance_labels, selectors)
             if instance_labels == selectors:
                 selected.append(instance)
         return selected
