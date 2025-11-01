@@ -49,7 +49,6 @@ def list_images(ctx, contains):
 def list_instances(ctx, by):
     exo = ctx.obj["exo"]
     selectors = parse_label_value_arg(by)
-    print(selectors)
     for instance in exo.get_instances_by(selectors):
         info = {}
         for key in ["id", "name", "state", "labels"]:
