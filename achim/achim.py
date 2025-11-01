@@ -43,7 +43,7 @@ def list_images(ctx, contains):
         print(name)
 
 
-@cli.command(help="List Instances")
+@cli.command(help="List Instances by Label/Value selectors")
 @click.option("--by", help="label=value pairs selector")
 @click.pass_context
 def list_instances(ctx, by):
@@ -105,7 +105,7 @@ def create_instance(
     print(instance)
 
 
-@cli.command(help="Start a Compute Instance")
+@cli.command(help="Start Compute Instances by Label/Value Selectors")
 @click.option("--by", help="label=value pairs selector")
 @click.pass_context
 def start(ctx, by):
@@ -115,17 +115,17 @@ def start(ctx, by):
         print(exo.start_instance(instance["id"]))
 
 
-@cli.command(help="Stop a Compute Instance")
+@cli.command(help="Stop Compute Instances by Label/Value Selectors")
 @click.option("--by", help="label=value pairs selector")
 @click.pass_context
-def stop_instance(ctx, by):
+def stop(ctx, by):
     exo = ctx.obj["exo"]
     selectors = parse_label_value_arg(by)
     for instance in exo.get_instances_by(selectors):
         print(exo.stop_instance(instance["id"]))
 
 
-@cli.command(help="Destroy a Compute Instance")
+@cli.command(help="Destroy Compute Instances by Label/Value Selectors")
 @click.option("--by", help="label=value pairs selector")
 @click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
 @click.pass_context
