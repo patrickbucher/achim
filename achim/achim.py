@@ -395,6 +395,7 @@ def do_create_instance(
     smallest = list(filter(lambda it: it["size"] == size, instance_types))[0]
     ssh_key = exo.get_ssh_key(keyname)
     labels = {
+        "name": name,
         "context": context,
         "group": group,
         "owner": owner,
