@@ -4,8 +4,7 @@ from functools import reduce
 import click
 from dotenv import dotenv_values
 from achim.exoscale import Exoscale
-from jinja2 import Environment, PackageLoader, select_autoescape
-import requests
+from jinja2 import Template
 import yaml
 
 from achim.utils import is_valid_ipv4, parse_label_value_arg
@@ -145,6 +144,7 @@ def protect(ctx, by):
     for instance in exo.get_instances_by(selectors):
         print(exo.protect_instance(instance["id"]))
 
+
 @cli.command(help="Revoke Instance Protection by Label/Value Selectors")
 @click.option("--by", help="label=value pairs selector")
 @click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
@@ -193,6 +193,9 @@ def create_group(ctx, file, keyname, context, autostart, image, size, ignore_exi
         owner_name = user["name"]
         if host_name in already_used and ignore_existing:
             continue
+        cloud_init_data = {}
+        if "cloud-config" in group:
+            cloud_init_data = prepare_cloud_init_data(group["cloud-config"], user)
         instance = do_create_instance(
             exo,
             host_name,
@@ -203,6 +206,7 @@ def create_group(ctx, file, keyname, context, autostart, image, size, ignore_exi
             autostart,
             image=image,
             size=size,
+            cloud_init_data=cloud_init_data,
         )
         instances.append(instance)
     print(instances)
@@ -582,3 +586,9 @@ def extract_instance_info(instance, fields):
     for key in fields:
         info[key] = instance.get(key, "")
     return info
+
+
+def prepare_cloud_init_data(cloud_config={}, data={}):
+    template = Template(yaml.dump(cloud_config))
+    cloud_init_data = yaml.load(template.render(data), yaml.SafeLoader)
+    return cloud_init_data
