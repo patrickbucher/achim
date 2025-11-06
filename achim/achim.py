@@ -231,7 +231,8 @@ def create_scenario(ctx, scenario, group, context, keyname, autostart):
     scenario_data = yaml.load(scenario.read(), Loader=yaml.SafeLoader)
     group_data = yaml.load(group.read(), Loader=yaml.SafeLoader)
     exo = ctx.obj["exo"]
-    validate_scenario(ctx, scenario_data)
+    image_kinds = validate_scenario(exo, scenario_data)
+    print(image_kinds)
     instance_data = scenario_data["instances"]
     network_data = scenario_data["networks"]
     group_name = sanitize_name(group_data["name"])
@@ -240,6 +241,7 @@ def create_scenario(ctx, scenario, group, context, keyname, autostart):
     networks_by_username = determine_networks(
         network_data, user_data, instances_by_username
     )
+    # TODO: for image_kinds['image'] == linux: build cloud_init_data
     instances = [
         do_create_instance(
             exo,
@@ -305,6 +307,22 @@ def destroy_network(ctx, name):
     if len(networks) != 1:
         fatal(f"network '{name}' not found or not unique")
     print(exo.delete_network(networks[0]["id"]))
+
+
+@cli.command(help="Destroy Orphaned Private Networks")
+@click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
+@click.pass_context
+def destroy_orphaned_networks(ctx, sure):
+    if not sure:
+        return
+    exo = ctx.obj["exo"]
+    networks = exo.get_networks()
+    instances = exo.get_instances()
+    all_network_ids = set([n["id"] for n in networks])
+    used_network_ids = set([n["id"] for i in instances for n in i["private-networks"]])
+    orphaned_network_ids = all_network_ids - used_network_ids
+    for network_id in orphaned_network_ids:
+        print(exo.delete_network(network_id))
 
 
 @cli.command(help="Destroy all Private Networks")
@@ -434,13 +452,15 @@ def get_networks(ctx, contains=""):
     return list(nets)
 
 
-def validate_scenario(ctx, scenario_data):
+def validate_scenario(exo, scenario_data):
     for field in ["name", "instances"]:
         if field not in scenario_data:
             fatal(f"missing required field '{field}' in scenario file")
     instance_data = scenario_data["instances"]
     required_images = set(map(lambda i: i["image"], instance_data))
-    available_images = set(get_image_names(ctx))
+    image_templates = exo.list_templates()
+    available_images = set([t["name"] for t in image_templates])
+    image_family_by_name = {t["name"]: t["family"] for t in image_templates}
     missing_images = required_images - available_images
     if missing_images:
         fatal(f"no such image(s): {missing_images}")
@@ -448,6 +468,20 @@ def validate_scenario(ctx, scenario_data):
     missing_sizes = required_sizes - set(sizes)
     if missing_sizes:
         fatal(f"no such size(s): {missing_sizes}")
+    image_families = {}
+    kinds = {
+        "debian": "linux",
+        "centos stream": "linux",
+        "fedore coreos": "linux",
+        "opensuse": "linux",
+        "sles": "linux",
+        "ubuntu": "linux",
+        "windows server with sql": "windows",
+    }
+    for name in required_images:
+        family = image_family_by_name[name]
+        image_families[family] = kinds[family] if family in kinds else family
+    return image_families
 
 
 def determine_instances(instance_data, user_data):
