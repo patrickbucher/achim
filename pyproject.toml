@@ -19,7 +19,7 @@ license = "GPL-3.0-or-later"
 license-files = ["LICENSE.txt"]
 name = "achim"
 readme = "README.md"
-version = "0.0.14"
+version = "0.0.15"
 
 [project.scripts]
 achim = "achim:cli"
