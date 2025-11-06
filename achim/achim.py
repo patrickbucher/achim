@@ -35,7 +35,7 @@ def cli(ctx):
     ctx.obj["exo"] = Exoscale(config)
 
 
-@cli.command(help="List Images")
+@cli.command(name="list-images", help="List Images")
 @click.option("--contains", help="filter image name (case insentitive)", default="")
 @click.pass_context
 def list_images(ctx, contains):
@@ -43,7 +43,7 @@ def list_images(ctx, contains):
         print(name)
 
 
-@cli.command(help="List Instances by Label/Value Selectors")
+@cli.command(name="list-instances", help="List Instances by Label/Value Selectors")
 @click.option("--by", help="label=value pairs selector")
 @click.pass_context
 def list_instances(ctx, by):
@@ -54,7 +54,7 @@ def list_instances(ctx, by):
         print(info)
 
 
-@cli.command(help="Create a Compute Instance")
+@cli.command(name="create-instance", help="Create a Compute Instance")
 @click.option("--name", required=True, help="instance name (hostname)")
 @click.option("--keyname", required=True, help="name of registered SSH key")
 @click.option("--context", help="context (label)", default="default")
@@ -103,7 +103,7 @@ def create_instance(
     print(instance)
 
 
-@cli.command(help="Start Compute Instances by Label/Value Selectors")
+@cli.command(name="start", help="Start Compute Instances by Label/Value Selectors")
 @click.option("--by", help="label=value pairs selector")
 @click.pass_context
 def start(ctx, by):
@@ -113,7 +113,7 @@ def start(ctx, by):
         print(exo.start_instance(instance["id"]))
 
 
-@cli.command(help="Stop Compute Instances by Label/Value Selectors")
+@cli.command(name="stop", help="Stop Compute Instances by Label/Value Selectors")
 @click.option("--by", help="label=value pairs selector")
 @click.pass_context
 def stop(ctx, by):
@@ -123,7 +123,7 @@ def stop(ctx, by):
         print(exo.stop_instance(instance["id"]))
 
 
-@cli.command(help="Destroy Compute Instances by Label/Value Selectors")
+@cli.command(name="destroy", help="Destroy Compute Instances by Label/Value Selectors")
 @click.option("--by", help="label=value pairs selector")
 @click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
 @click.pass_context
@@ -136,7 +136,7 @@ def destroy(ctx, by, sure):
         print(exo.destroy_instance(instance["id"]))
 
 
-@cli.command(help="Enable Instance Protection by Label/Value Selectors")
+@cli.command(name="protect", help="Enable Instance Protection by Label/Value Selectors")
 @click.option("--by", help="label=value pairs selector")
 @click.pass_context
 def protect(ctx, by):
@@ -146,7 +146,9 @@ def protect(ctx, by):
         print(exo.protect_instance(instance["id"]))
 
 
-@cli.command(help="Revoke Instance Protection by Label/Value Selectors")
+@cli.command(
+    name="deprotect", help="Revoke Instance Protection by Label/Value Selectors"
+)
 @click.option("--by", help="label=value pairs selector")
 @click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
 @click.pass_context
@@ -159,7 +161,7 @@ def deprotect(ctx, by, sure):
         print(exo.deprotect_instance(instance["id"]))
 
 
-@cli.command(help="Create Compute Instances for a Group")
+@cli.command(name="create-group", help="Create Compute Instances for a Group")
 @click.option(
     "--file", type=click.File("r", encoding="utf-8"), help="groups file to be used"
 )
@@ -213,7 +215,7 @@ def create_group(ctx, file, keyname, context, autostart, image, size, ignore_exi
     print(instances)
 
 
-@cli.command(help="Create Scenario Instances for a Group")
+@cli.command(name="create-scenario", help="Create Scenario Instances for a Group")
 @click.option(
     "--scenario",
     type=click.File("r", encoding="utf-8"),
@@ -279,43 +281,10 @@ def create_scenario(ctx, scenario, group, context, keyname, autostart):
     print(attachments)
 
 
-@cli.command(help="Stop all Instances by Scenario Name")
-@click.option("--name", help="scenario name (see scenario file)")
-@click.pass_context
-def stop_scenario(ctx, name):
-    exo = ctx.obj["exo"]
-    if not name:
-        fatal("scenario name required")
-    instances = exo.get_instances()
-    scenario_instances = list(
-        filter(lambda i: i.get("labels", {}).get("scenario", "") == name, instances)
-    )
-    if not scenario_instances:
-        fatal(f"no instances for scenario '{name}' found")
-    for instance in scenario_instances:
-        exo.stop_instance(instance["id"])
-        print(f'stopped instance {instance["name"]}')
-
-
-@cli.command(help="Start all Instances by Scenario Name")
-@click.option("--name", help="scenario name (see scenario file)")
-@click.pass_context
-def start_scenario(ctx, name):
-    exo = ctx.obj["exo"]
-    if not name:
-        fatal("scenario name required")
-    instances = exo.get_instances()
-    scenario_instances = list(
-        filter(lambda i: i.get("labels", {}).get("scenario", "") == name, instances)
-    )
-    if not scenario_instances:
-        fatal(f"no instances for scenario '{name}' found")
-    for instance in scenario_instances:
-        exo.start_instance(instance["id"])
-        print(f'started instance {instance["name"]}')
-
-
-@cli.command(help="Destroy Scenario Instances and Networks by Scenario Name")
+@cli.command(
+    name="destroy-scenario",
+    help="Destroy Scenario Instances and Networks by Scenario Name",
+)
 @click.option("--name", help="scenario name (see scenario file)")
 @click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
 @click.pass_context
@@ -339,7 +308,9 @@ def destroy_scenario(ctx, name, sure):
     print(networks)
 
 
-@cli.command(help="Generate HTML Overview Page for a Scenario")
+@cli.command(
+    name="export-scenario-overview", help="Generate HTML Overview Page for a Scenario"
+)
 @click.option("--name", help="scenario name (see scenario file)")
 @click.option("--hide-password", is_flag=True, default=False, help="Hide Password")
 @click.option("--file", type=click.File("w", encoding="utf-8"), help="HTML output file")
@@ -384,7 +355,7 @@ def scenario_overview(ctx, name, hide_password, file):
     file.write(template.render(instances=overview_data, name=name))
 
 
-@cli.command(help="Tests an HTTP Service on the Instances of the Group")
+@cli.command(name="probe", help="Tests an HTTP Service on the Instances of the Group")
 @click.option("--name", help="group name")
 @click.option("--suffix", help="URL suffix", default="")
 @click.pass_context
@@ -404,7 +375,7 @@ def probe(ctx, name, suffix):
         print(f"{ip}\t{status}\t{owner}")
 
 
-@cli.command(help="Generate an Ansible Inventory by Instance Labels")
+@cli.command(name="export-inventory", help="Generate an Ansible Inventory by Instance Labels")
 @click.option(
     "--file",
     type=click.File("w", encoding="utf-8"),
@@ -433,7 +404,9 @@ def inventory(ctx, file):
         file.write("\n")
 
 
-@cli.command(help="Generate an Ansible Playbook for Group Users")
+@cli.command(
+    name="create-user-playbook", help="Generate an Ansible Playbook for Group Users"
+)
 @click.option(
     "--group-file",
     type=click.File("r", encoding="utf-8"),
@@ -481,7 +454,10 @@ def user_playbook(group_file, playbook):
     yaml.dump(content, playbook)
 
 
-@cli.command(help="Generate Filtered HTML Overview Page for Instance Access Details")
+@cli.command(
+    name="export-group-overview",
+    help="Generate Filtered HTML Overview Page for Instance Access Details",
+)
 @click.option("--key", help="filter by label key (e.g. context, group)")
 @click.option("--value", help="filter by label value")
 @click.option("--file", type=click.File("w", encoding="utf-8"), help="HTML output file")
@@ -513,7 +489,7 @@ def overview(ctx, key, value, file):
     file.write(template.render(condition=condition, instances=output))
 
 
-@cli.command(help="List Instance Types")
+@cli.command(name="list-instance-types", help="List Instance Types")
 @click.option("--family", help="Instance Family", default="standard")
 @click.pass_context
 def list_instance_types(ctx, family):
@@ -527,7 +503,7 @@ def list_instance_types(ctx, family):
         print(instance_type)
 
 
-@cli.command(help="Create a Private Network")
+@cli.command(name="create-network", help="Create a Private Network")
 @click.option("--name", help="Network Name", required=True)
 @click.option("--description", help="Network Description")
 @click.option("--start-ip", help="Start of IP Range", default="10.0.0.1")
@@ -544,7 +520,7 @@ def create_network(ctx, name, description, start_ip, end_ip, netmask):
     print(result)
 
 
-@cli.command(help="List Private Networks")
+@cli.command(name="list-network", help="List Private Networks")
 @click.option("--contains", help="filter network name (case insentitive)", default="")
 @click.pass_context
 def list_networks(ctx, contains):
@@ -553,7 +529,7 @@ def list_networks(ctx, contains):
         print(network)
 
 
-@cli.command(help="Attach a Private Network to an Instance")
+@cli.command(name="attach-network", help="Attach a Private Network to an Instance")
 @click.option("--network", help="Name of the Network", required=True)
 @click.option("--instance", help="Name of the Instance", required=True)
 @click.option("--ip", help="Attach with static IP Address")
@@ -575,7 +551,7 @@ def attach_network(ctx, network, instance, ip):
     print(exo.attach_network(network_id, instance_id, ip))
 
 
-@cli.command(help="Destroy a Private Network")
+@cli.command(name="destroy-network", help="Destroy a Private Network")
 @click.option("--name", help="Name of the Network", required=True)
 @click.pass_context
 def destroy_network(ctx, name):
@@ -587,7 +563,7 @@ def destroy_network(ctx, name):
     print(exo.delete_network(networks[0]["id"]))
 
 
-@cli.command(help="Destroy Orphaned Private Networks")
+@cli.command(name="cleanup-networks", help="Destroy Orphaned Private Networks")
 @click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
 @click.pass_context
 def destroy_orphaned_networks(ctx, sure):
@@ -603,7 +579,7 @@ def destroy_orphaned_networks(ctx, sure):
         print(exo.delete_network(network_id))
 
 
-@cli.command(help="Destroy all Private Networks")
+@cli.command(name="flush-networks", help="Destroy all Private Networks")
 @click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
 @click.pass_context
 def destroy_all_networks(ctx, sure):
@@ -615,7 +591,7 @@ def destroy_all_networks(ctx, sure):
 
 
 # TODO: consider label/value selection (all instances if not restricted)
-@cli.command(help="Add Label to all Instances")
+@cli.command(name="label-all-instances", help="Add Label to all Instances")
 @click.option("--key", help="Key of the Label", required=True)
 @click.option("--value", help="Value of the Label", required=True)
 @click.pass_context
@@ -631,7 +607,7 @@ def add_label(ctx, key, value):
         )
 
 
-@cli.command(help="Flush all non-system DNS Records of a Domain")
+@cli.command(name="flush-dns", help="Flush all non-system DNS Records of a Domain")
 @click.option("--domain", help="Domain to be Flushed", required=True)
 @click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
 @click.pass_context
@@ -646,7 +622,7 @@ def flush_dns(ctx, domain, sure):
         print(exo.delete_dns_record(domain_id, record_id))
 
 
-@cli.command(help="Sync VM hostnames with DNS records for a Domain")
+@cli.command(name="sync-dns", help="Sync VM hostnames with DNS records for a Domain")
 @click.option("--domain", help="Domain to be Flushed", required=True)
 @click.pass_context
 def sync_dns(ctx, domain):
@@ -667,10 +643,10 @@ def sync_dns(ctx, domain):
         print("created", exo.create_dns_record(domain_id, name, ip, ttl=300))
 
 
-@cli.command(help="Check Instance State for Label/Value Selectors")
+@cli.command(name="check-state", help="Check Instance State for Label/Value Selectors")
 @click.option("--by", help="label=value pairs selector")
 @click.pass_context
-def state(ctx, by):
+def check_state(ctx, by):
     exo = ctx.obj["exo"]
     selectors = parse_label_value_arg(by)
     for instance in exo.get_instances_by(selectors):
