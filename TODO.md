@@ -9,3 +9,5 @@
         - useful after firewall is messed up and needs to be re-created
 - [ ] instances
     - [ ] idea: resize disk of one or multiple instances
+- [ ] cloud init
+    - [ ] test again if default user (e.g. `debian`) is also created with proper SSH key
