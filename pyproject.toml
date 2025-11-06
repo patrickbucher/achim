@@ -15,10 +15,11 @@ dependencies = [
 ]
 description = "Advanced Cloud Hyperscaling Infrastructure Manager"
 keywords = ["Cloud", "Exoscale", "Compute"]
-license = {text = "MIT"}
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE.txt"]
 name = "achim"
 readme = "README.md"
-version = "0.0.13"
+version = "0.0.14"
 
 [project.scripts]
 achim = "achim:cli"
