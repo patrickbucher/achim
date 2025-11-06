@@ -4,7 +4,8 @@ from functools import reduce
 import click
 from dotenv import dotenv_values
 from achim.exoscale import Exoscale
-from jinja2 import Template
+from jinja2 import Environment, PackageLoader, Template, select_autoescape
+import requests
 import yaml
 
 from achim.utils import is_valid_ipv4, parse_label_value_arg
@@ -278,6 +279,283 @@ def create_scenario(ctx, scenario, group, context, keyname, autostart):
     print(attachments)
 
 
+@cli.command(help="Stop all Instances by Scenario Name")
+@click.option("--name", help="scenario name (see scenario file)")
+@click.pass_context
+def stop_scenario(ctx, name):
+    exo = ctx.obj["exo"]
+    if not name:
+        fatal("scenario name required")
+    instances = exo.get_instances()
+    scenario_instances = list(
+        filter(lambda i: i.get("labels", {}).get("scenario", "") == name, instances)
+    )
+    if not scenario_instances:
+        fatal(f"no instances for scenario '{name}' found")
+    for instance in scenario_instances:
+        exo.stop_instance(instance["id"])
+        print(f'stopped instance {instance["name"]}')
+
+
+@cli.command(help="Start all Instances by Scenario Name")
+@click.option("--name", help="scenario name (see scenario file)")
+@click.pass_context
+def start_scenario(ctx, name):
+    exo = ctx.obj["exo"]
+    if not name:
+        fatal("scenario name required")
+    instances = exo.get_instances()
+    scenario_instances = list(
+        filter(lambda i: i.get("labels", {}).get("scenario", "") == name, instances)
+    )
+    if not scenario_instances:
+        fatal(f"no instances for scenario '{name}' found")
+    for instance in scenario_instances:
+        exo.start_instance(instance["id"])
+        print(f'started instance {instance["name"]}')
+
+
+@cli.command(help="Destroy Scenario Instances and Networks by Scenario Name")
+@click.option("--name", help="scenario name (see scenario file)")
+@click.option("--sure", is_flag=True, prompt=True, default=False, help="Are you sure?")
+@click.pass_context
+def destroy_scenario(ctx, name, sure):
+    if not sure:
+        return
+    exo = ctx.obj["exo"]
+
+    def has_scenario(o):
+        return o["labels"].get("scenario", "") == name
+
+    instances = [
+        exo.destroy_instance(instance["id"])
+        for instance in filter(has_scenario, exo.get_instances())
+    ]
+    networks = [
+        exo.delete_network(network["id"])
+        for network in filter(has_scenario, exo.get_networks())
+    ]
+    print(instances)
+    print(networks)
+
+
+@cli.command(help="Generate HTML Overview Page for a Scenario")
+@click.option("--name", help="scenario name (see scenario file)")
+@click.option("--hide-password", is_flag=True, default=False, help="Hide Password")
+@click.option("--file", type=click.File("w", encoding="utf-8"), help="HTML output file")
+@click.pass_context
+def scenario_overview(ctx, name, hide_password, file):
+    exo = ctx.obj["exo"]
+    if not name:
+        fatal("scenario name required")
+    instances = list(
+        filter(
+            lambda i: i.get("labels", {}).get("scenario", "") == name,
+            exo.get_instances(),
+        )
+    )
+    if not instances:
+        fatal(f"no instances for scenario '{name}' found")
+    overview_data = []
+    for instance in instances:
+        labels = instance.get("labels", {})
+        id = instance["id"]
+        pw = exo.get_instance_password(id)
+        template_id = instance.get("template", {}).get("id", "")
+        template = exo.get_template(template_id) if template_id else {}
+        family = template.get("family", "")
+        default_user = template.get("default-user", "")
+        ip = instance.get("public-ip", "")
+        connect = ("rdp" if family == "windows" else "ssh") + f" {default_user}@{ip}"
+        data = {
+            "owner": labels.get("owner", ""),
+            "name": instance["name"],
+            "image": template.get("name", ""),
+            "ip": ip,
+            "user": default_user,
+            "password": pw if not hide_password else "********",
+            "connect": connect,
+        }
+        overview_data.append(data)
+    overview_data = sorted(overview_data, key=lambda o: o["name"])
+    overview_data = sorted(overview_data, key=lambda o: o["owner"])
+    env = Environment(loader=PackageLoader("achim"), autoescape=select_autoescape())
+    template = env.get_template("scenario.html")
+    file.write(template.render(instances=overview_data, name=name))
+
+
+@cli.command(help="Tests an HTTP Service on the Instances of the Group")
+@click.option("--name", help="group name")
+@click.option("--suffix", help="URL suffix", default="")
+@click.pass_context
+def probe(ctx, name, suffix):
+    exo = ctx.obj["exo"]
+    instances = exo.get_instances()
+    instances = [i for i in instances if i["labels"].get("group", "") == name]
+    for instance in instances:
+        ip = instance["public-ip"]
+        owner = instance["labels"]["owner"]
+        url = f"http://{ip}/{suffix}"
+        try:
+            res = requests.get(url)
+            status = res.status_code
+        except Exception:
+            status = "ERR"
+        print(f"{ip}\t{status}\t{owner}")
+
+
+@cli.command(help="Generate an Ansible Inventory by Instance Labels")
+@click.option(
+    "--file",
+    type=click.File("w", encoding="utf-8"),
+    help="inventory file to be written",
+)
+@click.pass_context
+def inventory(ctx, file):
+    exo = ctx.obj["exo"]
+    instances = exo.get_instances()
+    sections = {}
+    for instance in instances:
+        ip = instance["public-ip"]
+        labels = instance["labels"] | {"name": instance["name"]}
+        for key in ["context", "group", "name"]:
+            if key not in labels:
+                continue
+            value = labels[key]
+            if value not in sections:
+                sections[value] = []
+            sections[value].append(ip)
+    for section in sorted(sections.keys()):
+        ips = sections[section]
+        file.write(f"[{section}]\n")
+        for ip in ips:
+            file.write(f"{ip}\n")
+        file.write("\n")
+
+
+@cli.command(help="Generate an Ansible Playbook for Group Users")
+@click.option(
+    "--group-file",
+    type=click.File("r", encoding="utf-8"),
+    help="groups file to be read",
+)
+@click.option(
+    "--playbook",
+    type=click.File("w", encoding="utf-8"),
+    help="playbook file to be written",
+)
+def user_playbook(group_file, playbook):
+    group = yaml.load(group_file.read(), Loader=yaml.SafeLoader)
+    content = []
+    for user in group["users"]:
+        host_name = to_host_name(user["name"])
+        user_name = default_user_name
+        ssh_key = user["ssh-key"]
+        play = {
+            "name": f"User Setup for {user_name}",
+            "hosts": host_name,
+            "become": True,
+            "tasks": [
+                {
+                    "name": "User Created",
+                    "user": {
+                        "name": user_name,
+                        "shell": "/usr/bin/bash",
+                        "create_home": True,
+                        "home": f"/home/{user_name}",
+                        "password": "*",
+                        "append": True,
+                        "groups": ["sudo"],
+                    },
+                },
+                {
+                    "name": "Key Authorized",
+                    "authorized_key": {
+                        "user": user_name,
+                        "key": ssh_key,
+                    },
+                },
+            ],
+        }
+        content.append(play)
+    yaml.dump(content, playbook)
+
+
+@cli.command(help="Generate Filtered HTML Overview Page for Instance Access Details")
+@click.option("--key", help="filter by label key (e.g. context, group)")
+@click.option("--value", help="filter by label value")
+@click.option("--file", type=click.File("w", encoding="utf-8"), help="HTML output file")
+@click.pass_context
+def overview(ctx, key, value, file):
+    exo = ctx.obj["exo"]
+    instances = exo.get_instances()
+    if key and value:
+        instances = [i for i in instances if i["labels"].get(key, "") == value]
+    if not instances:
+        fatal(f"no instances matched label filter {key}={value}")
+    output = []
+    for instance in sorted(instances, key=lambda i: i["name"]):
+        ip = instance["public-ip"]
+        host_name = instance["name"]
+        ssh_cmd = f"ssh {default_user_name}@{ip}"
+        name_parts = host_name.split("-")
+        first_name = name_parts[0].capitalize()
+        last_name = name_parts[1].capitalize()
+        swiss_name = f"{last_name}, {first_name}"
+        output.append((swiss_name, host_name, ip, ssh_cmd))
+    output = sorted(output, key=lambda o: o[0])
+    env = Environment(loader=PackageLoader("achim"), autoescape=select_autoescape())
+    template = env.get_template("overview.html")
+    if key and value:
+        condition = f"{key}={value}"
+    else:
+        condition = ""
+    file.write(template.render(condition=condition, instances=output))
+
+
+@cli.command(help="List Instance Types")
+@click.option("--family", help="Instance Family", default="standard")
+@click.pass_context
+def list_instance_types(ctx, family):
+    exo = ctx.obj["exo"]
+    filter_rules = {
+        "authorized": True,
+        "family": family,
+    }
+    instance_types = exo.get_instance_types(filter_rules)
+    for instance_type in instance_types:
+        print(instance_type)
+
+
+@cli.command(help="Create a Private Network")
+@click.option("--name", help="Network Name", required=True)
+@click.option("--description", help="Network Description")
+@click.option("--start-ip", help="Start of IP Range", default="10.0.0.1")
+@click.option("--end-ip", help="End of IP Range", default="10.0.0.150")
+@click.option("--netmask", help="Subnet Mask", default="255.255.255.0")
+@click.pass_context
+def create_network(ctx, name, description, start_ip, end_ip, netmask):
+    must_be_valid_name(name)
+    must_be_valid_ipv4(start_ip)
+    must_be_valid_ipv4(end_ip)
+    must_be_valid_ipv4(netmask)
+    exo = ctx.obj["exo"]
+    result = exo.create_network(name, start_ip, end_ip, netmask, description)
+    print(result)
+
+
+@cli.command(help="List Private Networks")
+@click.option("--contains", help="filter network name (case insentitive)", default="")
+@click.pass_context
+def list_networks(ctx, contains):
+    networks = get_networks(ctx, contains)
+    for network in networks:
+        print(network)
+
+
+@cli.command(help="Attach a Private Network to an Instance")
+@click.option("--network", help="Name of the Network", required=True)
+@click.option("--instance", help="Name of the Instance", required=True)
 @click.option("--ip", help="Attach with static IP Address")
 @click.pass_context
 def attach_network(ctx, network, instance, ip):
