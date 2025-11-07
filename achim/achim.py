@@ -423,7 +423,7 @@ def user_playbook(group_file, playbook):
     for user in group["users"]:
         host_name = to_host_name(user["name"])
         user_name = default_user_name
-        ssh_key = user["ssh-key"]
+        ssh_key = user["ssh_key"]
         play = {
             "name": f"User Setup for {user_name}",
             "hosts": host_name,
