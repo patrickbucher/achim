@@ -405,7 +405,7 @@ def inventory(ctx, file):
 
 
 @cli.command(
-    name="create-user-playbook", help="Generate an Ansible Playbook for Group Users"
+    name="export-user-playbook", help="Generate an Ansible Playbook for Group Users"
 )
 @click.option(
     "--group-file",
@@ -417,7 +417,7 @@ def inventory(ctx, file):
     type=click.File("w", encoding="utf-8"),
     help="playbook file to be written",
 )
-def user_playbook(group_file, playbook):
+def export_user_playbook(group_file, playbook):
     group = yaml.load(group_file.read(), Loader=yaml.SafeLoader)
     content = []
     for user in group["users"]:
