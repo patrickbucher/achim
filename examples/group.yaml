@@ -15,12 +15,16 @@ users:
     username: mallory
     ssh_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJhx+5Z/Ao+9w3EujyXcKcE8Wzw0uyApawro5dlMXQwa mallory_malfeasance@frickelbude.ch"
 cloud-config:
-  user:
-    name: "{{ username }}"
-    groups: sudo
-    shell: /usr/bin/bash
-    ssh_authorized_keys:
-      - "{{ ssh_key }}"
-    sudo: "ALL=(ALL) NOPASSWD:ALL"
-
-
+  users:
+    - name: "{{ username }}"
+      groups: sudo
+      shell: /usr/bin/bash
+      ssh_authorized_keys:
+        - "{{ ssh_key }}"
+      sudo: "ALL=(ALL) NOPASSWD:ALL"
+    - name: "patrick"
+      groups: sudo
+      shell: /usr/bin/bash
+      ssh_authorized_keys:
+        - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJhx+5Z/Ao+9w3EujyXcKcE8Wzw0uyApawro5dlMXQwa patrick.bucher@sluz.ch"
+      sudo: "ALL=(ALL) NOPASSWD:ALL"
