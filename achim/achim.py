@@ -357,27 +357,41 @@ def scenario_overview(ctx, name, hide_password, file):
 
 @cli.command(name="probe", help="Tests an HTTP Service on the Instances of the Group")
 @click.option("--name", help="group name")
+@click.option("--domain", help="domain name")
 @click.option("--suffix", help="URL suffix", default="")
 @click.option("--secure", is_flag=True, default=False, help="Use TLS?")
 @click.pass_context
-def probe(ctx, name, suffix, secure):
+def probe(ctx, name, domain, suffix, secure):
     exo = ctx.obj["exo"]
     instances = exo.get_instances()
     instances = [i for i in instances if i["labels"].get("group", "") == name]
+    if domain:
+        domain_id = exo.get_domain_id(domain)
+        dns_records = exo.get_non_system_dns_records(domain_id)
+    else:
+        secure = False  # TLS only possible via Hostname, not via IP
+        dns_records = []
     for instance in instances:
         ip = instance["public-ip"]
+        dns_entries = list(filter(lambda d: d["content"] == ip, dns_records))
         owner = instance["labels"]["owner"]
         proto = "https" if secure else "http"
-        url = f"{proto}://{ip}/{suffix}"
+        if dns_entries:
+            addr = dns_entries[0]["name"] + "." + domain
+        else:
+            addr = ip
+        url = f"{proto}://{addr}/{suffix}"
         try:
             res = requests.get(url)
             status = res.status_code
         except Exception:
             status = "ERR"
-        print(f"{ip}\t{status}\t{owner}")
+        print(f"{ip}\t{status}\t{owner:20s}\t{url}")
 
 
-@cli.command(name="export-inventory", help="Generate an Ansible Inventory by Instance Labels")
+@cli.command(
+    name="export-inventory", help="Generate an Ansible Inventory by Instance Labels"
+)
 @click.option(
     "--file",
     type=click.File("w", encoding="utf-8"),
