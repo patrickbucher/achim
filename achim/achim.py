@@ -358,15 +358,17 @@ def scenario_overview(ctx, name, hide_password, file):
 @cli.command(name="probe", help="Tests an HTTP Service on the Instances of the Group")
 @click.option("--name", help="group name")
 @click.option("--suffix", help="URL suffix", default="")
+@click.option("--secure", is_flag=True, default=False, help="Use TLS?")
 @click.pass_context
-def probe(ctx, name, suffix):
+def probe(ctx, name, suffix, secure):
     exo = ctx.obj["exo"]
     instances = exo.get_instances()
     instances = [i for i in instances if i["labels"].get("group", "") == name]
     for instance in instances:
         ip = instance["public-ip"]
         owner = instance["labels"]["owner"]
-        url = f"http://{ip}/{suffix}"
+        proto = "https" if secure else "http"
+        url = f"{proto}://{ip}/{suffix}"
         try:
             res = requests.get(url)
             status = res.status_code
