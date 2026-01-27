@@ -54,7 +54,7 @@ class Exoscale:
 
     def stop_instance(self, id):
         return self.put(f"instance/{id}:stop").json()
-    
+
     def protect_instance(self, id):
         return self.put(f"instance/{id}:add-protection").json()
 
@@ -160,6 +160,12 @@ class Exoscale:
 
     def get_network(self, id):
         return self.get(f"private-network/{id}").json()
+
+    def resize_disk(self, id, size):
+        return self.put(f"instance/{id}:resize-disk", {"disk-size": size}).json()
+
+    def scale_instance(self, id, type):
+        return self.put(f"instance/{id}:scale", {"instance-type": type}).json()
 
     def suffix_url(self, suffix):
         return f"{self.base_url}/{suffix}"

@@ -669,6 +669,37 @@ def check_state(ctx, by):
         print(extract_instance_info(instance, ["name", "state"]))
 
 
+@cli.command(name="resize-disk", help="Resize Instances by Label/Value Selectors")
+@click.option("--by", help="label=value pairs selector")
+@click.option("--size", help="new disk size in GB", type=int)
+@click.pass_context
+def resize_disk(ctx, by, size):
+    exo = ctx.obj["exo"]
+    selectors = parse_label_value_arg(by)
+    for instance in exo.get_instances_by(selectors):
+        print(exo.resize_disk(instance["id"], size))
+
+
+@cli.command(name="scale-instance", help="Scale Instances by Label/Value Selectors")
+@click.option("--by", help="label=value pairs selector")
+@click.option("--size", help="new instance size")
+@click.pass_context
+def scale_instance(ctx, by, size):
+    exo = ctx.obj["exo"]
+    filter_rules = {
+        "authorized": True,
+        "family": "standard",
+    }
+    types = list(
+        filter(lambda it: it["size"] == size, exo.get_instance_types(filter_rules))
+    )
+    if not types:
+        fatal(f"no intance types for size {size}")
+    selectors = parse_label_value_arg(by)
+    for instance in exo.get_instances_by(selectors):
+        print(exo.scale_instance(instance["id"], types[0]))
+
+
 def do_create_instance(
     exo,
     name,
